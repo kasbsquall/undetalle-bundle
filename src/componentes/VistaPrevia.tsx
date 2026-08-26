@@ -1,17 +1,20 @@
 import { useArreglo } from '../estado/ArregloContext'
-import Recipiente from './Recipiente'
+import Recipiente, { BOCA } from './Recipiente'
 import Pieza from './Pieza'
 
 /**
- * El arreglo armandose.
+ * El arreglo armandose dentro del recipiente.
  *
- * Las flores se reparten en espiral, con el mismo criterio con el que crecen
- * las semillas de un girasol: cada una a 137.5 grados de la anterior y a una
- * distancia proporcional a la raiz de su posicion. Eso da un ramo denso en el
- * centro que se abre hacia afuera, que es como se ve uno de verdad. Repartirlas
- * en fila daba una banda plana que no parecia un arreglo.
+ * Las piezas se acomodan por filas, de abajo hacia arriba, como cuando metes
+ * cosas en una canasta: cada una tiene su sitio y se ve entera. Antes se
+ * repartian en espiral imitando un ramo de verdad, y con muchas flores se
+ * convertia en una mancha donde no se distinguia nada.
  *
- * Las posiciones salen del indice y no del azar, para que una flor no salte de
+ * Este criterio ademas aguanta cualquier producto. En el bundle no solo hay
+ * flores: hay chocolates, un peluche y una botella de vino, y esas cosas nunca
+ * iban a encajar dentro de un ramo.
+ *
+ * Las posiciones salen del indice y no del azar, para que una pieza no salte de
  * sitio cada vez que la pantalla se vuelve a dibujar.
  */
 
@@ -24,11 +27,7 @@ interface Colocada {
   giro: number
   tamano: number
   orden: number
-  /** 0 el follaje al fondo, 1 las flores, 2 los extras delante. */
-  capa: number
 }
-
-const ANGULO_DORADO = 137.508 * (Math.PI / 180)
 
 /** Ruido estable: el mismo texto siempre devuelve el mismo numero. */
 function variacion(semilla: string): number {
@@ -39,19 +38,15 @@ function variacion(semilla: string): number {
 
 export default function VistaPrevia() {
   const { lineas, formatoId, cintaId, totalPiezas } = useArreglo()
+  const boca = BOCA[formatoId] ?? BOCA.ramo
 
-  /*
-   * Las flores van primero en la espiral, asi ocupan el centro del ramo. El
-   * follaje va al final, que es donde la espiral ya se abrio, y por eso queda
-   * asomando por los bordes. La profundidad no la da este orden sino el
-   * z-index, que se calcula aparte: el verde siempre por detras.
-   */
+  // Follaje al fondo, flores en medio, extras delante.
   const ordenadas = [...lineas].sort((a, b) => {
-    const peso = (c: string) => (c === 'flor' ? 0 : c === 'extra' ? 1 : 2)
+    const peso = (c: string) => (c === 'follaje' ? 0 : c === 'flor' ? 1 : 2)
     return peso(a.articulo.categoria) - peso(b.articulo.categoria)
   })
 
-  const unidades: Array<{ clave: string; id: string; nombre: string; escala: number; categoria: string }> = []
+  const unidades: Array<{ clave: string; id: string; nombre: string; escala: number }> = []
   for (const linea of ordenadas) {
     for (let n = 0; n < linea.cantidad; n++) {
       unidades.push({
@@ -59,46 +54,50 @@ export default function VistaPrevia() {
         id: linea.articulo.id,
         nombre: linea.articulo.nombre,
         escala: linea.articulo.escala,
-        categoria: linea.articulo.categoria,
       })
     }
   }
 
-  // Con pocas flores el ramo tiene que verse compacto; con muchas, abrirse sin
-  // salirse de la caja. El paso de la espiral se ajusta a la cantidad.
   const total = unidades.length
-  const apertura = Math.min(12.5, 6.5 + 28 / Math.max(4, total))
+
+  /*
+   * El tamano de pieza baja segun se van agregando cosas, para que el monton
+   * crezca pero no se desborde. Con pocas piezas se ven grandes, que es cuando
+   * conviene lucirlas.
+   */
+  const tamanoBase = total <= 3 ? 30 : total <= 8 ? 26 : total <= 16 ? 22 : 18
+  const porFila = Math.max(2, Math.round(boca.ancho / (tamanoBase * 0.8)))
+  const altoFila = tamanoBase * 0.62
+  const pasoX = boca.ancho / porFila
 
   const piezas: Colocada[] = unidades.map((u, i) => {
-    const r1 = variacion(u.clave)
-    const angulo = i * ANGULO_DORADO
-    const distancia = apertura * Math.sqrt(i)
+    const fila = Math.floor(i / porFila)
+    const enFila = i % porFila
+    const cuantasAqui = Math.min(porFila, total - fila * porFila)
 
-    // Elipse: el ramo es mas ancho que alto.
-    const x = 50 + Math.cos(angulo) * distancia * 1.22
-    const y = 60 + Math.sin(angulo) * distancia * 0.8
-
-    // El follaje se sale un poco mas, que es lo que hace de fondo verde.
-    const empuje = u.categoria === 'follaje' ? 1.18 : 1
+    // Cada fila se centra sobre la boca; las impares van algo corridas para que
+    // el apilado no forme una reja.
+    const anchoFila = cuantasAqui * pasoX
+    const inicio = 50 - anchoFila / 2 + pasoX / 2
+    const corrido = fila % 2 === 1 ? pasoX * 0.3 : 0
+    const r = variacion(u.clave)
 
     return {
       clave: u.clave,
       id: u.id,
       nombre: u.nombre,
-      x: 50 + (x - 50) * empuje,
-      y: 60 + (y - 60) * empuje,
-      giro: (r1 - 0.5) * 46,
-      // Las de afuera un poco mas chicas: da sensacion de profundidad.
-      tamano: (25 - Math.min(7, distancia * 0.32)) * u.escala,
+      x: inicio + enFila * pasoX + corrido + (r - 0.5) * 2.5,
+      y: boca.y + fila * altoFila + (r - 0.5) * 2,
+      giro: (r - 0.5) * 24,
+      tamano: tamanoBase * u.escala,
       orden: i,
-      capa: u.categoria === 'follaje' ? 0 : u.categoria === 'flor' ? 1 : 2,
     }
   })
 
   return (
-    <div className="relative w-full aspect-[4/5] rounded-2xl bg-gradient-to-b from-white to-marca-suave/50 border border-borde overflow-hidden">
+    <div className="relative w-full aspect-[4/5] rounded-2xl bg-gradient-to-b from-white to-marca-suave/45 border border-borde overflow-hidden">
       {totalPiezas === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center px-8 text-center">
+        <div className="absolute inset-0 flex items-center justify-center px-8 text-center z-10">
           <p className="text-[.86rem] text-texto-suave leading-relaxed">
             Tu arreglo aparece aquí.
             <br />
@@ -107,38 +106,36 @@ export default function VistaPrevia() {
         </div>
       )}
 
-      {/* Las flores. Ocupan la mitad de arriba y se apoyan sobre el recipiente. */}
-      <div className="absolute inset-x-0 top-0 h-[68%]">
+      <div className="absolute inset-0">
         {piezas.map((p) => (
           <div
             key={p.clave}
-            className="absolute animate-[caer_.5s_cubic-bezier(.23,1,.32,1)_both]"
+            className="absolute animate-[entrar_.42s_cubic-bezier(.2,.9,.3,1.2)_both]"
             style={{
               left: p.x + '%',
-              top: p.y + '%',
+              bottom: p.y + '%',
               width: p.tamano + '%',
-              height: p.tamano * 1.2 + '%',
+              height: p.tamano + '%',
               marginLeft: -p.tamano / 2 + '%',
-              zIndex: p.capa * 100 + p.orden,
-              ['--giro' as string]: p.giro + 'deg',
-              animationDelay: Math.min(p.orden, 12) * 26 + 'ms',
+              zIndex: 10 + p.orden,
+              animationDelay: Math.min(p.orden, 14) * 24 + 'ms',
             }}
           >
-            <div style={{ transform: 'rotate(' + p.giro + 'deg)' }} className="w-full h-full">
+            <div className="w-full h-full" style={{ transform: 'rotate(' + p.giro + 'deg)' }}>
               <Pieza id={p.id} nombre={p.nombre} />
             </div>
           </div>
         ))}
       </div>
 
-      {/* El recipiente, siempre delante de las flores. */}
-      <div className="absolute inset-x-0 bottom-[2%] h-[44%] z-[500]">
+      {/* El recipiente, siempre delante de lo que lleva dentro. */}
+      <div className="absolute inset-x-0 bottom-0 h-[46%] z-[400]">
         <Recipiente formatoId={formatoId} cintaId={cintaId} />
       </div>
 
       <style>{`
-        @keyframes caer {
-          from { opacity: 0; transform: translateY(-90px) scale(.8); }
+        @keyframes entrar {
+          from { opacity: 0; transform: translateY(-42px) scale(.72); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>

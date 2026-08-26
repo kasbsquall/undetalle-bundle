@@ -1,57 +1,107 @@
 import { FORMATOS, CINTAS } from '../datos/catalogo'
 
 /**
- * El recipiente donde cae el arreglo, dibujado en SVG.
+ * El recipiente donde se acomoda el arreglo.
  *
- * Va en vectores y no en foto por una razon practica: el color de la cinta lo
- * elige el cliente, y con una foto haria falta una imagen por cada combinacion
- * de formato y color. Asi es un solo valor que cambia.
+ * Va en vectores y no en foto porque el color de la cinta lo elige el cliente:
+ * con fotos haria falta una imagen por cada combinacion de formato y color.
+ *
+ * El ramo esta dibujado siguiendo un ramo real, no de memoria: papel en cono
+ * suave que se abre arriba, ceñido a media altura con el lazo, y por debajo el
+ * cilindro de papel que envuelve los tallos y le permite quedar de pie.
  */
-export default function Recipiente({ formatoId, cintaId }: { formatoId: string; cintaId: string }) {
+
+interface Props {
+  formatoId: string
+  cintaId: string
+}
+
+/** Donde queda la boca del recipiente, en porcentaje del alto de la vista. */
+export const BOCA: Record<string, { y: number; ancho: number }> = {
+  ramo: { y: 26, ancho: 84 },
+  caja: { y: 24, ancho: 74 },
+  florero: { y: 20, ancho: 46 },
+}
+
+export default function Recipiente({ formatoId, cintaId }: Props) {
   const formato = FORMATOS.find((f) => f.id === formatoId) ?? FORMATOS[0]
   const cinta = CINTAS.find((c) => c.id === cintaId) ?? CINTAS[0]
 
   if (formato.id === 'florero') {
     return (
-      <svg viewBox="0 0 200 160" className="w-full h-full" aria-hidden="true">
+      <svg viewBox="0 0 200 170" className="w-full h-full" aria-hidden="true">
         <defs>
           <linearGradient id="vidrio" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#DDEAF0" stopOpacity=".95" />
-            <stop offset="45%" stopColor="#F4FAFC" stopOpacity=".75" />
-            <stop offset="100%" stopColor="#C9DDE6" stopOpacity=".95" />
+            <stop offset="0%" stopColor="#CFE1E9" />
+            <stop offset="38%" stopColor="#F6FBFD" />
+            <stop offset="72%" stopColor="#E2EFF4" />
+            <stop offset="100%" stopColor="#BFD6E0" />
           </linearGradient>
         </defs>
-        <path d="M72 8 L128 8 L118 60 Q132 96 118 150 L82 150 Q68 96 82 60 Z" fill="url(#vidrio)" stroke="#B9D2DC" strokeWidth="1.5" />
-        <path d="M84 96 Q100 104 116 96 L116 148 Q100 154 84 148 Z" fill="#8FB6A0" opacity=".35" />
-        <rect x="70" y="70" width="60" height="12" rx="6" fill={cinta.color} />
-        <circle cx="100" cy="76" r="9" fill={cinta.color} />
-        <circle cx="100" cy="76" r="3.5" fill="#000" opacity=".12" />
+        <path d="M74 6 L126 6 L120 54 Q136 92 124 162 L76 162 Q64 92 80 54 Z"
+          fill="url(#vidrio)" stroke="#AEC9D4" strokeWidth="1.4" />
+        <path d="M79 92 Q100 100 121 92 L119 158 Q100 164 81 158 Z" fill="#8FB6A0" opacity=".28" />
+        <ellipse cx="100" cy="7" rx="26" ry="5" fill="#EAF4F8" stroke="#AEC9D4" strokeWidth="1.2" />
+        <rect x="72" y="66" width="56" height="11" rx="5.5" fill={cinta.color} />
+        <circle cx="100" cy="71" r="8" fill={cinta.color} />
+        <circle cx="100" cy="71" r="3" fill="#000" opacity=".14" />
       </svg>
     )
   }
 
   if (formato.id === 'caja') {
     return (
-      <svg viewBox="0 0 200 160" className="w-full h-full" aria-hidden="true">
-        <ellipse cx="100" cy="46" rx="70" ry="18" fill="#F2E3E7" />
-        <path d="M30 46 L30 118 Q30 140 100 140 Q170 140 170 118 L170 46 Z" fill="#F7EDF0" />
-        <path d="M30 46 L30 118 Q30 140 100 140 L100 46 Z" fill="#000" opacity=".03" />
-        <ellipse cx="100" cy="46" rx="70" ry="18" fill="none" stroke="#E4CDD4" strokeWidth="1.5" />
-        <rect x="26" y="86" width="148" height="14" rx="3" fill={cinta.color} />
-        <path d="M92 86 L100 78 L108 86 L100 94 Z" fill={cinta.color} />
-        <circle cx="100" cy="93" r="8" fill={cinta.color} />
+      <svg viewBox="0 0 200 170" className="w-full h-full" aria-hidden="true">
+        <ellipse cx="100" cy="30" rx="72" ry="19" fill="#EFDDE2" />
+        <ellipse cx="100" cy="30" rx="63" ry="14" fill="#E2CAD1" />
+        <path d="M28 30 L28 118 Q28 146 100 146 Q172 146 172 118 L172 30 Z" fill="#F8EEF1" />
+        <path d="M28 30 L28 118 Q28 146 100 146 L100 30 Z" fill="#000" opacity=".035" />
+        <ellipse cx="100" cy="30" rx="72" ry="19" fill="none" stroke="#E0C6CE" strokeWidth="1.5" />
+        <rect x="24" y="82" width="152" height="15" rx="3" fill={cinta.color} />
+        <path d="M100 74 L112 84 L100 94 L88 84 Z" fill={cinta.color} opacity=".85" />
+        <circle cx="100" cy="90" r="9" fill={cinta.color} />
+        <circle cx="100" cy="90" r="3.4" fill="#000" opacity=".14" />
       </svg>
     )
   }
 
+  // Ramo envuelto
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" aria-hidden="true">
-      <path d="M100 26 L172 88 Q140 150 100 150 Q60 150 28 88 Z" fill="#FBEFF2" />
-      <path d="M100 26 L172 88 Q140 150 100 150 Z" fill="#000" opacity=".035" />
-      <path d="M100 26 L172 88 Q140 150 100 150 Q60 150 28 88 Z" fill="none" stroke="#EFD8DE" strokeWidth="1.5" />
-      <path d="M62 104 Q100 118 138 104 L134 118 Q100 132 66 118 Z" fill={cinta.color} />
-      <circle cx="100" cy="114" r="10" fill={cinta.color} />
-      <circle cx="100" cy="114" r="4" fill="#000" opacity=".12" />
+    <svg viewBox="0 0 200 170" className="w-full h-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="papel" x1="0" y1="0" x2="1" y2="0.4">
+          <stop offset="0%" stopColor="#FAE6EC" />
+          <stop offset="42%" stopColor="#FDF4F6" />
+          <stop offset="100%" stopColor="#F3D9E1" />
+        </linearGradient>
+      </defs>
+
+      {/* Panel de papel de atras, asomando por los lados */}
+      <path d="M12 30 Q26 96 74 112 L126 112 Q174 96 188 30 Q150 52 100 52 Q50 52 12 30 Z"
+        fill="#F2DCE3" opacity=".85" />
+
+      {/* Cono principal del papel */}
+      <path d="M22 26 Q34 100 78 116 L122 116 Q166 100 178 26 Q142 50 100 50 Q58 50 22 26 Z"
+        fill="url(#papel)" stroke="#EBCBD6" strokeWidth="1.2" />
+
+      {/* Pliegues */}
+      <path d="M64 44 Q74 92 88 114" fill="none" stroke="#E9C8D3" strokeWidth="1.1" opacity=".75" />
+      <path d="M136 44 Q126 92 112 114" fill="none" stroke="#E9C8D3" strokeWidth="1.1" opacity=".75" />
+      <path d="M100 50 L100 116" fill="none" stroke="#E9C8D3" strokeWidth="1" opacity=".5" />
+
+      {/* Cilindro de papel que envuelve los tallos */}
+      <path d="M78 116 Q76 142 80 160 Q100 166 120 160 Q124 142 122 116 Z"
+        fill="#FBEFF3" stroke="#EBCBD6" strokeWidth="1.2" />
+      <path d="M92 118 Q90 142 93 162" fill="none" stroke="#EBCBD6" strokeWidth="1" opacity=".6" />
+      <path d="M110 118 Q112 142 109 162" fill="none" stroke="#EBCBD6" strokeWidth="1" opacity=".6" />
+
+      {/* El lazo, en el punto donde se ciñe */}
+      <path d="M100 118 Q78 106 68 118 Q76 132 100 124 Z" fill={cinta.color} />
+      <path d="M100 118 Q122 106 132 118 Q124 132 100 124 Z" fill={cinta.color} />
+      <path d="M96 124 L88 148 L99 141 Z" fill={cinta.color} opacity=".9" />
+      <path d="M104 124 L112 148 L101 141 Z" fill={cinta.color} opacity=".9" />
+      <circle cx="100" cy="121" r="6.5" fill={cinta.color} />
+      <circle cx="100" cy="121" r="2.4" fill="#000" opacity=".16" />
     </svg>
   )
 }

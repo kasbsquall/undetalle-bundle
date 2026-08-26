@@ -28,6 +28,14 @@ export default function Panel() {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl border border-borde p-5">
+        <h2 className="font-semibold text-[1.02rem] mb-3.5">Vista previa</h2>
+        <VistaPrevia />
+        <p className="mt-2.5 text-[.72rem] text-texto-suave text-center">
+          La vista previa es una referencia de tu combinación
+        </p>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-borde p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-[1.02rem]">Tu arreglo</h2>
           {a.totalPiezas > 0 && (
@@ -168,14 +176,6 @@ export default function Panel() {
           <Truck size={16} weight="light" />
           {a.llevaEnvioGratis ? 'Tu envío va gratis' : 'Envío gratis desde S/ ' + ENVIO_GRATIS_DESDE}
         </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-borde p-5">
-        <h2 className="font-semibold text-[1.02rem] mb-3.5">Vista previa</h2>
-        <VistaPrevia />
-        <p className="mt-2.5 text-[.72rem] text-texto-suave text-center">
-          La vista previa es una referencia de tu combinación
-        </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-borde p-5">
