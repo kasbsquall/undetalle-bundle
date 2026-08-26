@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Los colores salen del sitio real de Undetalle, no de una paleta inventada.
+   El fucsia y el verde son los mismos que usa el checkout en produccion. */
+@theme {
+  --color-marca: #EC5070;
+  --color-marca-suave: #FDF2F6;
+  --color-marca-oscura: #C93A58;
+  --color-exito: #16A34A;
+  --color-exito-suave: #ECFDF3;
+  --color-borde: #E6E6EC;
+  --color-texto: #111827;
+  --color-texto-suave: #6B7280;
+  --color-fondo: #FBF7F8;
+
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Los importes se alinean en columna: sin esto el total baila cada vez que
+   cambia una cifra. */
+.cifra { font-variant-numeric: tabular-nums lining-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
