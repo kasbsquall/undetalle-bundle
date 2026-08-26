@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Minus, Plus, Check, Flower, Leaf, Gift, PenNib } from '@phosphor-icons/react'
+import { Minus, Plus, Check, Flower, Confetti, Gift, PenNib, ShieldCheck, Clock } from '@phosphor-icons/react'
 import { useArreglo } from '../estado/ArregloContext'
 import { ARTICULOS, FORMATOS, CINTAS, type Categoria } from '../datos/catalogo'
 import Panel from '../componentes/Panel'
@@ -18,8 +18,14 @@ const soles = (n: number) => 'S/ ' + n.toFixed(2)
 const PASOS = [
   { id: 1, nombre: 'Presentación', ayuda: 'Elige cómo va tu arreglo', icono: Gift },
   { id: 2, nombre: 'Flores y follaje', ayuda: 'Lo que va dentro', icono: Flower },
-  { id: 3, nombre: 'Extras', ayuda: 'Para acompañar el detalle', icono: Leaf },
+  { id: 3, nombre: 'Extras', ayuda: 'Para acompañar el detalle', icono: Confetti },
   { id: 4, nombre: 'Mensaje', ayuda: 'Tu dedicatoria', icono: PenNib },
+]
+
+const BENEFICIOS: Array<[typeof ShieldCheck, string]> = [
+  [ShieldCheck, 'Flores frescas del día'],
+  [Gift, 'Tarjeta dedicatoria gratis'],
+  [Clock, 'Entrega el mismo día'],
 ]
 
 function Contador({ id }: { id: string }) {
@@ -40,7 +46,12 @@ function Contador({ id }: { id: string }) {
       <button
         onClick={() => sumar(id)}
         aria-label="Agregar uno"
-        className="px-3 py-2 bg-marca text-white hover:bg-marca-oscura transition-colors"
+        className={
+          'px-3 py-2 transition-colors ' +
+          (cantidad > 0
+            ? 'bg-marca text-white hover:bg-marca-oscura'
+            : 'bg-marca-suave text-marca hover:bg-marca hover:text-white')
+        }
       >
         <Plus size={14} weight="bold" />
       </button>
@@ -266,6 +277,18 @@ export default function Constructor() {
                   </button>
                 )}
               </div>
+            </div>
+
+            <div className="mt-4 bg-white rounded-2xl border border-borde p-5">
+              <h2 className="font-semibold text-[.95rem] mb-3">Tu pedido incluye siempre</h2>
+              <ul className="grid sm:grid-cols-3 gap-3 text-[.85rem] text-texto-suave">
+                {BENEFICIOS.map(([Icono, texto]) => (
+                  <li key={texto} className="flex items-center gap-2.5">
+                    <Icono size={19} weight="light" className="text-exito shrink-0" />
+                    {texto}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 

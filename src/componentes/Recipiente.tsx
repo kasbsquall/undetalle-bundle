@@ -20,18 +20,18 @@ interface Props {
  * Donde queda la boca de cada recipiente, en porcentaje del alto de la vista
  * previa, contando desde abajo.
  *
- * Estos numeros no son a ojo: el recipiente ocupa el 46% inferior de la vista y
+ * Estos numeros no son a ojo: el recipiente ocupa el 58% inferior de la vista y
  * dentro de su viewBox de 170 la boca esta a una altura conocida, asi que salen
- * de (170 - alturaDeLaBoca) / 170 * 46. Se les resta un poco para que la primera
+ * de (170 - alturaDeLaBoca) / 170 * 58. Se les resta un poco para que la primera
  * fila de piezas quede metida dentro y no flotando encima.
  *
  * Cuando estaban mal puestos, las flores aparecian al costado del recipiente en
  * lugar de saliendo de el.
  */
 export const BOCA: Record<string, { y: number; ancho: number }> = {
-  ramo: { y: 31, ancho: 80 },
-  caja: { y: 33, ancho: 70 },
-  florero: { y: 40, ancho: 42 },
+  ramo: { y: 39, ancho: 80 },
+  caja: { y: 41, ancho: 70 },
+  florero: { y: 50, ancho: 42 },
 }
 
 export default function Recipiente({ formatoId, cintaId }: Props) {

@@ -95,7 +95,7 @@ export default function VistaPrevia() {
   })
 
   return (
-    <div className="relative w-full aspect-[4/5] rounded-2xl bg-gradient-to-b from-white to-marca-suave/45 border border-borde overflow-hidden">
+    <div className="relative w-full aspect-square rounded-2xl bg-gradient-to-b from-white to-marca-suave/45 border border-borde overflow-hidden">
       {totalPiezas === 0 && (
         <div className="absolute inset-0 flex items-center justify-center px-8 text-center z-10">
           <p className="text-[.86rem] text-texto-suave leading-relaxed">
@@ -129,7 +129,7 @@ export default function VistaPrevia() {
       </div>
 
       {/* El recipiente, siempre delante de lo que lleva dentro. */}
-      <div className="absolute inset-x-0 bottom-0 h-[46%] z-[400]">
+      <div className="absolute inset-x-0 bottom-0 h-[58%] z-[400]">
         <Recipiente formatoId={formatoId} cintaId={cintaId} />
       </div>
 

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Trash, Minus, Plus, X, Truck, ShieldCheck, Gift, Clock } from '@phosphor-icons/react'
+import { Trash, Minus, Plus, X, Truck } from '@phosphor-icons/react'
 import { useArreglo } from '../estado/ArregloContext'
 import { TRAMOS, FORMATOS, ENVIO_GRATIS_DESDE } from '../datos/catalogo'
 import VistaPrevia from './VistaPrevia'
@@ -18,12 +18,6 @@ export default function Panel() {
   const avance = recorrido > 0
     ? Math.min(100, Math.round(((a.subtotal - tramoActual.desde) / recorrido) * 100))
     : 100
-
-  const beneficios: Array<[typeof ShieldCheck, string]> = [
-    [ShieldCheck, 'Flores frescas del día'],
-    [Gift, 'Tarjeta dedicatoria gratis'],
-    [Clock, 'Entrega el mismo día'],
-  ]
 
   return (
     <div className="space-y-4">
@@ -52,14 +46,18 @@ export default function Panel() {
           Llevas {a.totalPiezas} {a.totalPiezas === 1 ? 'pieza' : 'piezas'}
         </p>
 
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-2">
           <div className="flex-1 h-2.5 rounded-full bg-borde overflow-hidden">
             <div
               className="h-full rounded-full bg-marca transition-[width] duration-500 ease-out"
               style={{ width: avance + '%' }}
             />
           </div>
-          <span className="cifra text-[.85rem] font-semibold">{a.porcentaje}%</span>
+          {a.porcentaje > 0 && (
+            <span className="cifra text-[.78rem] font-bold text-marca bg-marca-suave px-2 py-0.5 rounded-md whitespace-nowrap">
+              −{a.porcentaje}%
+            </span>
+          )}
         </div>
 
         {a.faltaParaSiguiente !== null ? (
@@ -178,17 +176,6 @@ export default function Panel() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-borde p-5">
-        <h2 className="font-semibold text-[1.02rem] mb-3">Incluye siempre</h2>
-        <ul className="space-y-2.5 text-[.85rem] text-texto-suave">
-          {beneficios.map(([Icono, texto]) => (
-            <li key={texto} className="flex items-center gap-2.5">
-              <Icono size={18} weight="light" className="text-exito shrink-0" />
-              {texto}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   )
 }
