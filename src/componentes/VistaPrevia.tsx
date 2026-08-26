@@ -5,9 +5,14 @@ import Pieza from './Pieza'
 /**
  * El arreglo armandose.
  *
- * Cada unidad que agrega el cliente cae dentro del recipiente y se queda. Las
- * posiciones se calculan a partir del indice, no al azar, para que una flor no
- * salte de sitio cada vez que la pantalla se vuelve a dibujar.
+ * Las flores se reparten en espiral, con el mismo criterio con el que crecen
+ * las semillas de un girasol: cada una a 137.5 grados de la anterior y a una
+ * distancia proporcional a la raiz de su posicion. Eso da un ramo denso en el
+ * centro que se abre hacia afuera, que es como se ve uno de verdad. Repartirlas
+ * en fila daba una banda plana que no parecia un arreglo.
+ *
+ * Las posiciones salen del indice y no del azar, para que una flor no salte de
+ * sitio cada vez que la pantalla se vuelve a dibujar.
  */
 
 interface Colocada {
@@ -21,91 +26,112 @@ interface Colocada {
   orden: number
 }
 
+const ANGULO_DORADO = 137.508 * (Math.PI / 180)
+
 /** Ruido estable: el mismo texto siempre devuelve el mismo numero. */
 function variacion(semilla: string): number {
   let h = 0
   for (let i = 0; i < semilla.length; i++) h = (h * 31 + semilla.charCodeAt(i)) | 0
-  return ((h % 1000) / 1000 + 1) % 1
+  return Math.abs(h % 1000) / 1000
 }
 
 export default function VistaPrevia() {
   const { lineas, formatoId, cintaId, totalPiezas } = useArreglo()
 
-  const piezas: Colocada[] = []
-  let indice = 0
-
-  // El follaje se dibuja primero para que quede detras de las flores.
+  // El follaje va primero para que quede detras, y mas abierto que las flores.
   const ordenadas = [...lineas].sort((a, b) => {
     const peso = (c: string) => (c === 'follaje' ? 0 : c === 'flor' ? 1 : 2)
     return peso(a.articulo.categoria) - peso(b.articulo.categoria)
   })
 
+  const unidades: Array<{ clave: string; id: string; nombre: string; escala: number; categoria: string }> = []
   for (const linea of ordenadas) {
     for (let n = 0; n < linea.cantidad; n++) {
-      const clave = `${linea.articulo.id}-${n}`
-      const r1 = variacion(clave)
-      const r2 = variacion(clave + 'b')
-
-      // Se reparten en abanico: las primeras al centro, las siguientes abriendo.
-      const anillo = Math.floor(indice / 5)
-      const enAnillo = indice % 5
-      const angulo = (-70 + enAnillo * 35 + (r1 - 0.5) * 18) * (Math.PI / 180)
-      const radio = 15 + anillo * 13 + r2 * 6
-
-      piezas.push({
-        clave,
+      unidades.push({
+        clave: linea.articulo.id + '-' + n,
         id: linea.articulo.id,
         nombre: linea.articulo.nombre,
-        x: 50 + Math.sin(angulo) * radio,
-        y: 40 - Math.cos(angulo) * radio * 0.55 + anillo * 2,
-        giro: (r1 - 0.5) * 40,
-        tamano: 20 * linea.articulo.escala,
-        orden: indice,
+        escala: linea.articulo.escala,
+        categoria: linea.articulo.categoria,
       })
-      indice++
     }
   }
 
+  // Con pocas flores el ramo tiene que verse compacto; con muchas, abrirse sin
+  // salirse de la caja. El paso de la espiral se ajusta a la cantidad.
+  const total = unidades.length
+  const apertura = Math.min(15, 7.5 + 34 / Math.max(4, total))
+
+  const piezas: Colocada[] = unidades.map((u, i) => {
+    const r1 = variacion(u.clave)
+    const angulo = i * ANGULO_DORADO
+    const distancia = apertura * Math.sqrt(i)
+
+    // Elipse: el ramo es mas ancho que alto.
+    const x = 50 + Math.cos(angulo) * distancia * 1.28
+    const y = 52 + Math.sin(angulo) * distancia * 0.86
+
+    // El follaje se sale un poco mas, que es lo que hace de fondo verde.
+    const empuje = u.categoria === 'follaje' ? 1.22 : 1
+
+    return {
+      clave: u.clave,
+      id: u.id,
+      nombre: u.nombre,
+      x: 50 + (x - 50) * empuje,
+      y: 52 + (y - 52) * empuje,
+      giro: (r1 - 0.5) * 46,
+      // Las de afuera un poco mas chicas: da sensacion de profundidad.
+      tamano: (25 - Math.min(7, distancia * 0.32)) * u.escala,
+      orden: i,
+    }
+  })
+
   return (
-    <div className="relative w-full aspect-[4/5] rounded-2xl bg-gradient-to-b from-white to-marca-suave/60 border border-borde overflow-hidden">
+    <div className="relative w-full aspect-[4/5] rounded-2xl bg-gradient-to-b from-white to-marca-suave/50 border border-borde overflow-hidden">
       {totalPiezas === 0 && (
         <div className="absolute inset-0 flex items-center justify-center px-8 text-center">
-          <p className="text-sm text-texto-suave leading-relaxed">
-            Tu arreglo aparece aquí.<br />Empieza agregando tus flores.
+          <p className="text-[.86rem] text-texto-suave leading-relaxed">
+            Tu arreglo aparece aquí.
+            <br />
+            Empieza eligiendo tus flores.
           </p>
         </div>
       )}
 
-      {/* Las flores, cayendo dentro */}
-      <div className="absolute inset-x-0 top-[6%] bottom-[38%]">
+      {/* Las flores. Ocupan la mitad de arriba y se apoyan sobre el recipiente. */}
+      <div className="absolute inset-x-0 top-0 h-[64%]">
         {piezas.map((p) => (
           <div
             key={p.clave}
-            className="absolute animate-[caer_.42s_cubic-bezier(.23,1,.32,1)_both]"
+            className="absolute animate-[caer_.5s_cubic-bezier(.23,1,.32,1)_both]"
             style={{
-              left: `${p.x}%`,
-              top: `${p.y}%`,
-              width: `${p.tamano}%`,
-              height: `${p.tamano * 1.25}%`,
-              transform: `translate(-50%,-50%) rotate(${p.giro}deg)`,
-              zIndex: p.orden,
-              animationDelay: `${Math.min(p.orden, 10) * 28}ms`,
+              left: p.x + '%',
+              top: p.y + '%',
+              width: p.tamano + '%',
+              height: p.tamano * 1.2 + '%',
+              marginLeft: -p.tamano / 2 + '%',
+              zIndex: 10 + p.orden,
+              ['--giro' as string]: p.giro + 'deg',
+              animationDelay: Math.min(p.orden, 12) * 26 + 'ms',
             }}
           >
-            <Pieza id={p.id} nombre={p.nombre} />
+            <div style={{ transform: 'rotate(' + p.giro + 'deg)' }} className="w-full h-full">
+              <Pieza id={p.id} nombre={p.nombre} />
+            </div>
           </div>
         ))}
       </div>
 
-      {/* El recipiente, siempre delante */}
-      <div className="absolute inset-x-0 bottom-0 h-[46%] z-50">
+      {/* El recipiente, siempre delante de las flores. */}
+      <div className="absolute inset-x-0 bottom-[2%] h-[44%] z-[500]">
         <Recipiente formatoId={formatoId} cintaId={cintaId} />
       </div>
 
       <style>{`
         @keyframes caer {
-          from { opacity: 0; transform: translate(-50%, -180%) rotate(var(--giro, 0deg)) scale(.85); }
-          to   { opacity: 1; }
+          from { opacity: 0; transform: translateY(-90px) scale(.8); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </div>
