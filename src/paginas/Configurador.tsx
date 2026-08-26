@@ -192,13 +192,13 @@ export default function Configurador() {
           </p>
 
           <div className="overflow-x-auto -mx-5 px-5">
-            <table className="w-full text-[.88rem] min-w-[560px]">
+            <table className="w-full text-[.88rem] min-w-[320px] sm:min-w-[560px]">
               <thead>
                 <tr className="text-[.72rem] uppercase tracking-[.05em] text-texto-suave">
                   <th className="text-left font-semibold pb-2.5">Material</th>
-                  <th className="text-left font-semibold pb-2.5">Categoría</th>
-                  <th className="text-right font-semibold pb-2.5 w-[120px]">Precio</th>
-                  <th className="text-right font-semibold pb-2.5 w-[120px]">Stock</th>
+                  <th className="hidden sm:table-cell text-left font-semibold pb-2.5">Categoría</th>
+                  <th className="text-right font-semibold pb-2.5 w-[102px] sm:w-[120px]">Precio</th>
+                  <th className="text-right font-semibold pb-2.5 w-[78px] sm:w-[120px]">Stock</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,12 +212,12 @@ export default function Configurador() {
                         <span>{a.nombre}</span>
                       </div>
                     </td>
-                    <td className="py-2 text-texto-suave capitalize">{a.categoria}</td>
+                    <td className="hidden sm:table-cell py-2 text-texto-suave capitalize">{a.categoria}</td>
                     <td className="py-2 text-right">
                       <Numero
                         valor={a.precio}
                         prefijo="S/"
-                        ancho="w-[104px]"
+                        ancho="w-[86px] sm:w-[104px]"
                         onChange={(n) => c.editarArticulo(a.id, { precio: n })}
                       />
                     </td>
@@ -228,7 +228,7 @@ export default function Configurador() {
                         )}
                         <Numero
                           valor={a.stock}
-                          ancho="w-[76px]"
+                          ancho="w-[62px] sm:w-[76px]"
                           onChange={(n) => c.editarArticulo(a.id, { stock: n })}
                         />
                       </div>
