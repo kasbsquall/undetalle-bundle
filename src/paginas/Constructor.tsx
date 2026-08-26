@@ -153,10 +153,6 @@ export default function Constructor() {
             </div>
 
             <div className="bg-white rounded-2xl border border-borde p-5">
-              <p className="text-[.83rem] text-texto-suave mb-4">
-                {PASOS.find((p) => p.id === paso)?.ayuda}
-              </p>
-
               {paso === 1 && (
                 <div className="space-y-6">
                   <div>
