@@ -1,18 +1,64 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Info } from '@phosphor-icons/react'
-import { ARTICULOS, FORMATOS, TRAMOS, ENVIO_GRATIS_DESDE } from '../datos/catalogo'
+import { ArrowLeft, Info, ArrowCounterClockwise, Check } from '@phosphor-icons/react'
+import { FORMATOS } from '../datos/catalogo'
+import { useConfig } from '../estado/ConfigContext'
 import Encabezado from '../componentes/Encabezado'
+import Pieza from '../componentes/Pieza'
 
 const soles = (n: number) => 'S/ ' + n.toFixed(2)
 
 /**
  * La pantalla que responde la pregunta de Wilson: esto lo cargo yo.
  *
- * En el prototipo solo muestra la configuracion, no la guarda. En el producto
- * real vive dentro del panel de WordPress y cada campo es editable, con el
- * control de stock que aqui todavia no existe.
+ * Es editable de verdad, no una maqueta: lo que se cambia aqui se ve en la
+ * tienda al instante. En el prototipo se guarda en el navegador; en el producto
+ * real vive en la base de datos y esta pantalla es la del panel de WordPress.
  */
+
+function Numero({
+  valor,
+  onChange,
+  sufijo,
+  prefijo,
+  ancho = 'w-24',
+}: {
+  valor: number
+  onChange: (n: number) => void
+  sufijo?: string
+  prefijo?: string
+  ancho?: string
+}) {
+  return (
+    <div className={'relative ' + ancho}>
+      {prefijo && (
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[.78rem] text-texto-suave pointer-events-none">
+          {prefijo}
+        </span>
+      )}
+      <input
+        type="number"
+        min={0}
+        value={valor}
+        onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+        className={
+          'cifra w-full rounded-lg border border-borde py-1.5 text-[.86rem] text-right ' +
+          'focus:outline-none focus:border-marca focus:ring-[3px] focus:ring-marca/12 ' +
+          (prefijo ? 'pl-8 pr-2.5 ' : 'px-2.5 ') +
+          (sufijo ? 'pr-7' : '')
+        }
+      />
+      {sufijo && (
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[.78rem] text-texto-suave pointer-events-none">
+          {sufijo}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export default function Configurador() {
+  const c = useConfig()
+
   return (
     <div className="min-h-dvh">
       <Encabezado />
@@ -25,16 +71,25 @@ export default function Configurador() {
           <ArrowLeft size={16} weight="light" /> Volver a la tienda
         </Link>
 
-        <div className="flex items-start gap-3 mb-6">
-          <div>
+        <div className="flex flex-wrap items-start gap-3 mb-6">
+          <div className="flex-1 min-w-[240px]">
             <h1 className="text-[1.5rem] lg:text-[1.9rem] font-bold tracking-[-.02em]">
               Configurador del bundle
             </h1>
             <p className="text-texto-suave text-[.92rem] mt-1">
-              Así se administra desde el panel: los tramos, los formatos y el material disponible.
+              Cambia precios, stock y descuentos. La tienda lo toma al instante.
             </p>
           </div>
-          <span className="ml-auto shrink-0 px-3 py-1.5 rounded-full bg-exito-suave text-exito text-[.78rem] font-semibold">
+          {c.hayCambios && (
+            <button
+              onClick={c.restablecer}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-borde text-[.84rem] hover:border-marca/40 transition-colors"
+            >
+              <ArrowCounterClockwise size={15} weight="light" />
+              Restablecer
+            </button>
+          )}
+          <span className="px-3 py-1.5 rounded-full bg-exito-suave text-exito text-[.78rem] font-semibold">
             Activo
           </span>
         </div>
@@ -42,50 +97,67 @@ export default function Configurador() {
         <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-marca-suave text-[.85rem] mb-6">
           <Info size={18} weight="light" className="text-marca shrink-0 mt-0.5" />
           <p>
-            En el prototipo esta pantalla es solo de lectura. En la versión final cada campo se
-            edita y se guarda, y el catálogo sale de los productos de la tienda.
+            Cambia cualquier valor y vuelve a la tienda: lo verás aplicado. En el prototipo se
+            guarda solo en este navegador.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4 mb-4">
           <section className="bg-white rounded-2xl border border-borde p-5">
-            <h2 className="font-semibold text-[1.02rem] mb-4">Reglas de descuento por monto</h2>
-            <div className="rounded-xl border border-borde overflow-hidden">
-              <div className="grid grid-cols-2 px-4 py-2 bg-fondo text-[.75rem] font-semibold uppercase tracking-[.05em] text-texto-suave">
-                <span>Rango de compra</span>
-                <span className="text-right">Descuento</span>
-              </div>
-              {TRAMOS.map((t) => (
-                <div key={t.desde} className="grid grid-cols-2 px-4 py-2.5 border-t border-borde text-[.88rem]">
-                  <span className="cifra">
-                    {t.hasta === null ? 'S/ ' + t.desde + ' o más' : 'S/ ' + t.desde + ' - S/ ' + t.hasta}
-                  </span>
-                  <span className="cifra text-right font-semibold">{t.porcentaje}%</span>
+            <h2 className="font-semibold text-[1.02rem] mb-1">Descuentos por monto</h2>
+            <p className="text-[.8rem] text-texto-suave mb-4">
+              Desde qué monto aplica cada tramo y cuánto descuenta.
+            </p>
+
+            <div className="space-y-2">
+              {c.tramos.map((t, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <span className="text-[.84rem] text-texto-suave w-14 shrink-0">Desde</span>
+                  <Numero
+                    valor={t.desde}
+                    prefijo="S/"
+                    onChange={(n) => c.editarTramo(i, { desde: n })}
+                  />
+                  <span className="text-[.84rem] text-texto-suave ml-auto shrink-0">Descuento</span>
+                  <Numero
+                    valor={t.porcentaje}
+                    sufijo="%"
+                    ancho="w-[86px]"
+                    onChange={(n) => c.editarTramo(i, { porcentaje: Math.min(100, n) })}
+                  />
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-xl bg-fondo text-[.88rem]">
-              <span className="text-texto-suave">Envío gratis desde</span>
-              <span className="cifra font-semibold">{soles(ENVIO_GRATIS_DESDE)}</span>
+
+            <div className="flex items-center gap-2.5 mt-5 pt-4 border-t border-borde">
+              <span className="text-[.84rem] flex-1">Envío gratis desde</span>
+              <Numero valor={c.envioGratisDesde} prefijo="S/" onChange={c.setEnvioGratisDesde} />
             </div>
           </section>
 
           <section className="bg-white rounded-2xl border border-borde p-5">
-            <h2 className="font-semibold text-[1.02rem] mb-4">Pasos del bundle</h2>
-            <div className="space-y-2">
+            <h2 className="font-semibold text-[1.02rem] mb-1">Pasos y formatos</h2>
+            <p className="text-[.8rem] text-texto-suave mb-4">
+              Qué pasos ve el cliente y en qué puede ir su arreglo.
+            </p>
+
+            <div className="space-y-2 mb-5">
               {[
                 ['Presentación', 'Formato del arreglo y color de la cinta'],
                 ['Flores y follaje', 'Lo que va dentro del arreglo'],
                 ['Extras', 'Globos, chocolates, peluches y más'],
                 ['Mensaje', 'Dedicatoria personalizada'],
               ].map(([nombre, ayuda], i) => (
-                <div key={nombre} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-borde">
+                <div
+                  key={nombre}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-borde"
+                >
                   <span className="w-6 h-6 rounded-full bg-marca text-white grid place-items-center text-[.72rem] font-bold shrink-0">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[.89rem] font-medium">{nombre}</p>
-                    <p className="text-[.76rem] text-texto-suave">{ayuda}</p>
+                    <p className="text-[.88rem] font-medium">{nombre}</p>
+                    <p className="text-[.75rem] text-texto-suave">{ayuda}</p>
                   </div>
                   <span className="w-9 h-5 rounded-full bg-exito relative shrink-0">
                     <span className="absolute right-0.5 top-0.5 w-4 h-4 rounded-full bg-white" />
@@ -94,10 +166,12 @@ export default function Configurador() {
               ))}
             </div>
 
-            <h2 className="font-semibold text-[1.02rem] mt-6 mb-3">Formatos disponibles</h2>
             <div className="space-y-2">
               {FORMATOS.map((f) => (
-                <div key={f.id} className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-borde text-[.88rem]">
+                <div
+                  key={f.id}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-borde text-[.88rem]"
+                >
                   <span className="flex-1">{f.nombre}</span>
                   <span className="cifra text-texto-suave">
                     {f.precio === 0 ? 'Incluido' : '+ ' + soles(f.precio)}
@@ -109,33 +183,67 @@ export default function Configurador() {
         </div>
 
         <section className="bg-white rounded-2xl border border-borde p-5">
-          <h2 className="font-semibold text-[1.02rem] mb-4">Material disponible en el bundle</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-[.88rem] min-w-[440px]">
+          <h2 className="font-semibold text-[1.02rem] mb-1">Material disponible</h2>
+          <p className="text-[.8rem] text-texto-suave mb-4">
+            El precio por unidad y cuántas quedan. Al llegar a cero, el cliente ve el material
+            agotado y no lo puede agregar.
+          </p>
+
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full text-[.88rem] min-w-[560px]">
               <thead>
-                <tr className="text-[.74rem] uppercase tracking-[.05em] text-texto-suave">
-                  <th className="text-left font-semibold pb-2.5">Producto</th>
+                <tr className="text-[.72rem] uppercase tracking-[.05em] text-texto-suave">
+                  <th className="text-left font-semibold pb-2.5">Material</th>
                   <th className="text-left font-semibold pb-2.5">Categoría</th>
-                  <th className="text-right font-semibold pb-2.5">Precio</th>
-                  <th className="text-right font-semibold pb-2.5">Stock</th>
+                  <th className="text-right font-semibold pb-2.5 w-[120px]">Precio</th>
+                  <th className="text-right font-semibold pb-2.5 w-[120px]">Stock</th>
                 </tr>
               </thead>
               <tbody>
-                {ARTICULOS.map((a) => (
+                {c.articulos.map((a) => (
                   <tr key={a.id} className="border-t border-borde">
-                    <td className="py-2.5">{a.nombre}</td>
-                    <td className="py-2.5 text-texto-suave capitalize">{a.categoria}</td>
-                    <td className="py-2.5 text-right cifra">{soles(a.precio)}</td>
-                    <td className="py-2.5 text-right text-texto-suave">Sin control</td>
+                    <td className="py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-fondo p-1 shrink-0">
+                          <Pieza id={a.id} nombre={a.nombre} />
+                        </div>
+                        <span>{a.nombre}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 text-texto-suave capitalize">{a.categoria}</td>
+                    <td className="py-2 text-right">
+                      <Numero
+                        valor={a.precio}
+                        prefijo="S/"
+                        ancho="w-[104px]"
+                        onChange={(n) => c.editarArticulo(a.id, { precio: n })}
+                      />
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {a.stock === 0 && (
+                          <span className="text-[.72rem] text-texto-suave">Agotado</span>
+                        )}
+                        <Numero
+                          valor={a.stock}
+                          ancho="w-[76px]"
+                          onChange={(n) => c.editarArticulo(a.id, { stock: n })}
+                        />
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="mt-4 text-[.8rem] text-texto-suave">
-            El control de stock por material es de las cosas que faltan y que conviene resolver
-            antes de salir en vivo: si el material es sobrante, es limitado por definición.
-          </p>
+
+          <Link
+            to="/"
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-marca text-white text-[.9rem] font-semibold hover:bg-marca-oscura transition-colors"
+          >
+            <Check size={16} weight="bold" />
+            Ver el resultado en la tienda
+          </Link>
         </section>
       </main>
     </div>

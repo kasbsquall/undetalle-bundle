@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Minus, Plus, Check, Flower, Confetti, Gift, PenNib, ShieldCheck, Clock } from '@phosphor-icons/react'
 import { useArreglo } from '../estado/ArregloContext'
-import { ARTICULOS, FORMATOS, CINTAS, type Categoria } from '../datos/catalogo'
+import { FORMATOS, CINTAS, type Categoria } from '../datos/catalogo'
+import { useConfig } from '../estado/ConfigContext'
 import Panel from '../componentes/Panel'
 import Recipiente from '../componentes/Recipiente'
 import Encabezado from '../componentes/Encabezado'
@@ -29,9 +30,10 @@ const BENEFICIOS: Array<[typeof ShieldCheck, string]> = [
   [Clock, 'Entrega el mismo día'],
 ]
 
-function Contador({ id }: { id: string }) {
+function Contador({ id, stock }: { id: string; stock: number }) {
   const { cantidades, sumar, restar } = useArreglo()
   const cantidad = cantidades[id] ?? 0
+  const tope = cantidad >= stock
 
   return (
     <div className="flex items-center rounded-xl border border-borde overflow-hidden">
@@ -46,12 +48,13 @@ function Contador({ id }: { id: string }) {
       <span className="cifra flex-1 text-center text-[.9rem] font-semibold">{cantidad}</span>
       <button
         onClick={() => sumar(id)}
-        aria-label="Agregar uno"
+        disabled={tope}
+        aria-label={tope ? 'Sin más unidades disponibles' : 'Agregar uno'}
         className={
-          'px-3 py-2 transition-colors ' +
+          'px-3 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ' +
           (cantidad > 0
-            ? 'bg-marca text-white hover:bg-marca-oscura'
-            : 'bg-marca-suave text-marca hover:bg-marca hover:text-white')
+            ? 'bg-marca text-white hover:enabled:bg-marca-oscura'
+            : 'bg-marca-suave text-marca hover:enabled:bg-marca hover:enabled:text-white')
         }
       >
         <Plus size={14} weight="bold" />
@@ -62,7 +65,8 @@ function Contador({ id }: { id: string }) {
 
 function Tarjetas({ categoria }: { categoria: Categoria }) {
   const { cantidades } = useArreglo()
-  const items = ARTICULOS.filter((a) => a.categoria === categoria)
+  const { articulos } = useConfig()
+  const items = articulos.filter((a) => a.categoria === categoria)
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -82,8 +86,17 @@ function Tarjetas({ categoria }: { categoria: Categoria }) {
             <div className="p-3">
               <p className="font-semibold text-[.88rem] leading-tight">{art.nombre}</p>
               <p className="text-[.74rem] text-texto-suave mt-0.5 mb-1.5">{art.descripcion}</p>
-              <p className="cifra text-[.86rem] font-semibold text-marca mb-2.5">{soles(art.precio)} c/u</p>
-              <Contador id={art.id} />
+              <div className="flex items-baseline gap-2 mb-2.5">
+                <p className="cifra text-[.86rem] font-semibold text-marca">{soles(art.precio)} c/u</p>
+                {art.stock === 0 ? (
+                  <span className="text-[.72rem] font-medium text-texto-suave">Agotado</span>
+                ) : art.stock - (cantidades[art.id] ?? 0) <= 5 ? (
+                  <span className="cifra text-[.72rem] font-medium text-marca">
+                    quedan {art.stock - (cantidades[art.id] ?? 0)}
+                  </span>
+                ) : null}
+              </div>
+              <Contador id={art.id} stock={art.stock} />
             </div>
           </div>
         )

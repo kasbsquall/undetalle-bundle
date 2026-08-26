@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { ProveedorConfig } from './estado/ConfigContext'
 import { ProveedorArreglo } from './estado/ArregloContext'
 import Constructor from './paginas/Constructor'
 import Checkout from './paginas/Checkout'
@@ -7,7 +8,8 @@ import Configurador from './paginas/Configurador'
 
 export default function App() {
   return (
-    <ProveedorArreglo>
+    <ProveedorConfig>
+      <ProveedorArreglo>
       <Routes>
         <Route path="/" element={<Constructor />} />
         <Route path="/checkout" element={<Checkout />} />
@@ -15,6 +17,7 @@ export default function App() {
         <Route path="/configurador" element={<Configurador />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </ProveedorArreglo>
+      </ProveedorArreglo>
+    </ProveedorConfig>
   )
 }

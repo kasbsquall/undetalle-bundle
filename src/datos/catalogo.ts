@@ -21,6 +21,8 @@ export interface Articulo {
   pieza: string
   /** Cuanto ocupa dentro del arreglo, para que no todo se dibuje igual. */
   escala: number
+  /** Unidades disponibles. El material del bundle es sobrante, o sea limitado. */
+  stock: number
 }
 
 export interface Formato {
@@ -85,33 +87,33 @@ export const CINTAS: Cinta[] = [
 ]
 
 export const ARTICULOS: Articulo[] = [
-  { id: 'rosa-roja',    nombre: 'Rosas rojas',      descripcion: 'Clasicas y elegantes',   precio: 6, categoria: 'flor',    foto: 'rosa-roja',    pieza: 'rosa-roja',    escala: 1 },
-  { id: 'rosa-rosada',  nombre: 'Rosas rosadas',    descripcion: 'Romanticas y dulces',    precio: 6, categoria: 'flor',    foto: 'rosa-rosada',  pieza: 'rosa-rosada',  escala: 1 },
-  { id: 'lirio',        nombre: 'Lirios blancos',   descripcion: 'Elegancia y pureza',     precio: 7, categoria: 'flor',    foto: 'lirio',        pieza: 'lirio',        escala: 1.15 },
-  { id: 'girasol',      nombre: 'Girasoles',        descripcion: 'Alegria y energia',      precio: 6, categoria: 'flor',    foto: 'girasol',      pieza: 'girasol',      escala: 1.2 },
-  { id: 'tulipan',      nombre: 'Tulipanes',        descripcion: 'Color y ternura',        precio: 6, categoria: 'flor',    foto: 'tulipan',      pieza: 'tulipan',      escala: 0.95 },
-  { id: 'gerbera',      nombre: 'Gerberas',         descripcion: 'Frescura y vitalidad',   precio: 5, categoria: 'flor',    foto: 'gerbera',      pieza: 'gerbera',      escala: 1 },
-  { id: 'clavel',       nombre: 'Claveles',         descripcion: 'Belleza duradera',       precio: 4, categoria: 'flor',    foto: 'clavel',       pieza: 'clavel',       escala: 0.9 },
-  { id: 'hortensia',    nombre: 'Hortensias',       descripcion: 'Volumen y delicadeza',   precio: 7, categoria: 'flor',    foto: 'hortensia',    pieza: 'hortensia',    escala: 1.3 },
+  { id: 'rosa-roja',    nombre: 'Rosas rojas',      descripcion: 'Clasicas y elegantes',   precio: 6, categoria: 'flor',    foto: 'rosa-roja',    pieza: 'rosa-roja',    escala: 1, stock: 24 },
+  { id: 'rosa-rosada',  nombre: 'Rosas rosadas',    descripcion: 'Romanticas y dulces',    precio: 6, categoria: 'flor',    foto: 'rosa-rosada',  pieza: 'rosa-rosada',  escala: 1, stock: 18 },
+  { id: 'lirio',        nombre: 'Lirios blancos',   descripcion: 'Elegancia y pureza',     precio: 7, categoria: 'flor',    foto: 'lirio',        pieza: 'lirio',        escala: 1.15, stock: 9 },
+  { id: 'girasol',      nombre: 'Girasoles',        descripcion: 'Alegria y energia',      precio: 6, categoria: 'flor',    foto: 'girasol',      pieza: 'girasol',      escala: 1.2, stock: 12 },
+  { id: 'tulipan',      nombre: 'Tulipanes',        descripcion: 'Color y ternura',        precio: 6, categoria: 'flor',    foto: 'tulipan',      pieza: 'tulipan',      escala: 0.95, stock: 15 },
+  { id: 'gerbera',      nombre: 'Gerberas',         descripcion: 'Frescura y vitalidad',   precio: 5, categoria: 'flor',    foto: 'gerbera',      pieza: 'gerbera',      escala: 1, stock: 20 },
+  { id: 'clavel',       nombre: 'Claveles',         descripcion: 'Belleza duradera',       precio: 4, categoria: 'flor',    foto: 'clavel',       pieza: 'clavel',       escala: 0.9, stock: 30 },
+  { id: 'hortensia',    nombre: 'Hortensias',       descripcion: 'Volumen y delicadeza',   precio: 7, categoria: 'flor',    foto: 'hortensia',    pieza: 'hortensia',    escala: 1.3, stock: 6 },
 
-  { id: 'eucalipto',    nombre: 'Follaje eucalipto', descripcion: 'Verde y aromatico',     precio: 4, categoria: 'follaje', foto: 'eucalipto',    pieza: 'eucalipto',    escala: 1.25 },
-  { id: 'helecho',      nombre: 'Helecho',           descripcion: 'Textura y volumen',     precio: 3, categoria: 'follaje', foto: 'helecho',      pieza: 'helecho',      escala: 1.2 },
-  { id: 'gypsophila',   nombre: 'Gypsophila',        descripcion: 'Nube de flores blancas', precio: 4, categoria: 'follaje', foto: 'gypsophila',  pieza: 'gypsophila',   escala: 1.1 },
+  { id: 'eucalipto',    nombre: 'Follaje eucalipto', descripcion: 'Verde y aromatico',     precio: 4, categoria: 'follaje', foto: 'eucalipto',    pieza: 'eucalipto',    escala: 1.25, stock: 25 },
+  { id: 'helecho',      nombre: 'Helecho',           descripcion: 'Textura y volumen',     precio: 3, categoria: 'follaje', foto: 'helecho',      pieza: 'helecho',      escala: 1.2, stock: 14 },
+  { id: 'gypsophila',   nombre: 'Gypsophila',        descripcion: 'Nube de flores blancas', precio: 4, categoria: 'follaje', foto: 'gypsophila',  pieza: 'gypsophila',   escala: 1.1, stock: 16 },
 
-  { id: 'globo',        nombre: 'Globo metalico',    descripcion: 'Para ocasiones especiales', precio: 12, categoria: 'extra', foto: 'globo',     pieza: 'globo',        escala: 1.1 },
-  { id: 'chocolates',   nombre: 'Caja de chocolates', descripcion: 'Bombones surtidos',    precio: 25, categoria: 'extra',  foto: 'chocolates',   pieza: 'chocolates',   escala: 1 },
-  { id: 'peluche',      nombre: 'Peluche',            descripcion: 'Oso de 25 cm',         precio: 30, categoria: 'extra',  foto: 'peluche',      pieza: 'peluche',      escala: 1.15 },
-  { id: 'vino-tinto',   nombre: 'Vino tinto',         descripcion: 'Botella 750 ml',       precio: 45, categoria: 'extra',  foto: 'vino',         pieza: 'vino',         escala: 1.1 },
+  { id: 'globo',        nombre: 'Globo metalico',    descripcion: 'Para ocasiones especiales', precio: 12, categoria: 'extra', foto: 'globo',     pieza: 'globo',        escala: 1.1, stock: 8 },
+  { id: 'chocolates',   nombre: 'Caja de chocolates', descripcion: 'Bombones surtidos',    precio: 25, categoria: 'extra',  foto: 'chocolates',   pieza: 'chocolates',   escala: 1, stock: 5 },
+  { id: 'peluche',      nombre: 'Peluche',            descripcion: 'Oso de 25 cm',         precio: 30, categoria: 'extra',  foto: 'peluche',      pieza: 'peluche',      escala: 1.15, stock: 3 },
+  { id: 'vino-tinto',   nombre: 'Vino tinto',         descripcion: 'Botella 750 ml',       precio: 45, categoria: 'extra',  foto: 'vino',         pieza: 'vino',         escala: 1.1, stock: 4 },
 ]
 
-export function tramoPara(subtotal: number): TramoDescuento {
-  for (const t of TRAMOS) {
+export function tramoPara(subtotal: number, tramos: TramoDescuento[] = TRAMOS): TramoDescuento {
+  for (const t of tramos) {
     if (subtotal >= t.desde && (t.hasta === null || subtotal <= t.hasta)) return t
   }
-  return TRAMOS[0]
+  return tramos[0]
 }
 
 /** El siguiente tramo al que puede llegar, para decirle cuanto le falta. */
-export function siguienteTramo(subtotal: number): TramoDescuento | null {
-  return TRAMOS.find((t) => t.desde > subtotal) ?? null
+export function siguienteTramo(subtotal: number, tramos: TramoDescuento[] = TRAMOS): TramoDescuento | null {
+  return tramos.find((t) => t.desde > subtotal) ?? null
 }
