@@ -67,7 +67,7 @@ export default function VistaPrevia() {
   // Con pocas flores el ramo tiene que verse compacto; con muchas, abrirse sin
   // salirse de la caja. El paso de la espiral se ajusta a la cantidad.
   const total = unidades.length
-  const apertura = Math.min(15, 7.5 + 34 / Math.max(4, total))
+  const apertura = Math.min(12.5, 6.5 + 28 / Math.max(4, total))
 
   const piezas: Colocada[] = unidades.map((u, i) => {
     const r1 = variacion(u.clave)
@@ -75,8 +75,8 @@ export default function VistaPrevia() {
     const distancia = apertura * Math.sqrt(i)
 
     // Elipse: el ramo es mas ancho que alto.
-    const x = 50 + Math.cos(angulo) * distancia * 1.28
-    const y = 52 + Math.sin(angulo) * distancia * 0.86
+    const x = 50 + Math.cos(angulo) * distancia * 1.22
+    const y = 60 + Math.sin(angulo) * distancia * 0.8
 
     // El follaje se sale un poco mas, que es lo que hace de fondo verde.
     const empuje = u.categoria === 'follaje' ? 1.18 : 1
@@ -86,7 +86,7 @@ export default function VistaPrevia() {
       id: u.id,
       nombre: u.nombre,
       x: 50 + (x - 50) * empuje,
-      y: 52 + (y - 52) * empuje,
+      y: 60 + (y - 60) * empuje,
       giro: (r1 - 0.5) * 46,
       // Las de afuera un poco mas chicas: da sensacion de profundidad.
       tamano: (25 - Math.min(7, distancia * 0.32)) * u.escala,
@@ -108,7 +108,7 @@ export default function VistaPrevia() {
       )}
 
       {/* Las flores. Ocupan la mitad de arriba y se apoyan sobre el recipiente. */}
-      <div className="absolute inset-x-0 top-0 h-[64%]">
+      <div className="absolute inset-x-0 top-0 h-[68%]">
         {piezas.map((p) => (
           <div
             key={p.clave}
