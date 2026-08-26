@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, ShieldCheck, Truck, CheckCircle } from '@phosphor-icons/react'
 import { useArreglo } from '../estado/ArregloContext'
-import { FORMATOS, CINTAS, ENVIO_GRATIS_DESDE } from '../datos/catalogo'
+import { FORMATOS, CINTAS } from '../datos/catalogo'
+import { useConfig } from '../estado/ConfigContext'
 import Encabezado from '../componentes/Encabezado'
 import VistaPrevia from '../componentes/VistaPrevia'
 
@@ -34,6 +35,7 @@ const DISTRITOS = [
 
 export default function Checkout() {
   const a = useArreglo()
+  const { envioGratisDesde } = useConfig()
   const navegar = useNavigate()
   const [distrito, setDistrito] = useState(DISTRITOS[0].nombre)
   const [pasarela, setPasarela] = useState(PASARELAS[0].id)
@@ -134,8 +136,8 @@ export default function Checkout() {
               >
                 <Truck size={18} weight="light" className="shrink-0" />
                 {a.llevaEnvioGratis
-                  ? 'Tu compra supera S/ ' + ENVIO_GRATIS_DESDE + ', el envío va gratis'
-                  : 'Envío a ' + zona.nombre + ': ' + soles(zona.envio) + '. Gratis desde S/ ' + ENVIO_GRATIS_DESDE}
+                  ? 'Tu compra supera S/ ' + envioGratisDesde + ', el envío va gratis'
+                  : 'Envío a ' + zona.nombre + ': ' + soles(zona.envio) + '. Gratis desde S/ ' + envioGratisDesde}
               </div>
             </section>
 

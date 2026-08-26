@@ -89,44 +89,48 @@ export default function Configurador() {
               Restablecer
             </button>
           )}
-          <span className="px-3 py-1.5 rounded-full bg-exito-suave text-exito text-[.78rem] font-semibold">
-            Activo
-          </span>
         </div>
 
         <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-marca-suave text-[.85rem] mb-6">
           <Info size={18} weight="light" className="text-marca shrink-0 mt-0.5" />
           <p>
-            Cambia cualquier valor y vuelve a la tienda: lo verás aplicado. En el prototipo se
-            guarda solo en este navegador.
+            En el prototipo los cambios se guardan solo en este navegador. En el producto real
+            viven en la base de datos y los ve cualquiera que entre a la tienda.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-4 mb-4">
+        <div className="grid lg:grid-cols-2 gap-4 mb-4 items-start">
           <section className="bg-white rounded-2xl border border-borde p-5">
             <h2 className="font-semibold text-[1.02rem] mb-1">Descuentos por monto</h2>
             <p className="text-[.8rem] text-texto-suave mb-4">
-              Desde qué monto aplica cada tramo y cuánto descuenta.
+              Desde qué monto aplica cada tramo y cuánto descuenta. Debajo del primer tramo no
+              hay descuento.
             </p>
 
             <div className="space-y-2">
-              {c.tramos.map((t, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <span className="text-[.84rem] text-texto-suave w-14 shrink-0">Desde</span>
-                  <Numero
-                    valor={t.desde}
-                    prefijo="S/"
-                    onChange={(n) => c.editarTramo(i, { desde: n })}
-                  />
-                  <span className="text-[.84rem] text-texto-suave ml-auto shrink-0">Descuento</span>
-                  <Numero
-                    valor={t.porcentaje}
-                    sufijo="%"
-                    ancho="w-[86px]"
-                    onChange={(n) => c.editarTramo(i, { porcentaje: Math.min(100, n) })}
-                  />
-                </div>
-              ))}
+              {c.tramos.map((t, i) =>
+                // El primer tramo es el suelo: empieza en cero y no descuenta.
+                // Ponerlo como campo editable solo invita a romper la escalera.
+                i === 0 ? null : (
+                  <div key={i} className="flex items-center gap-2.5">
+                    <span className="text-[.84rem] text-texto-suave shrink-0">Desde</span>
+                    <Numero
+                      valor={t.desde}
+                      prefijo="S/"
+                      onChange={(n) => c.editarTramo(i, { desde: n })}
+                    />
+                    <span className="cifra text-[.78rem] text-texto-suave shrink-0">
+                      {t.hasta === null ? 'a más' : 'a ' + soles(t.hasta)}
+                    </span>
+                    <Numero
+                      valor={t.porcentaje}
+                      sufijo="%"
+                      ancho="w-[86px]"
+                      onChange={(n) => c.editarTramo(i, { porcentaje: Math.min(100, n) })}
+                    />
+                  </div>
+                ),
+              )}
             </div>
 
             <div className="flex items-center gap-2.5 mt-5 pt-4 border-t border-borde">
@@ -138,7 +142,7 @@ export default function Configurador() {
           <section className="bg-white rounded-2xl border border-borde p-5">
             <h2 className="font-semibold text-[1.02rem] mb-1">Pasos y formatos</h2>
             <p className="text-[.8rem] text-texto-suave mb-4">
-              Qué pasos ve el cliente y en qué puede ir su arreglo.
+              Cómo está armado el recorrido del cliente y en qué puede ir su arreglo.
             </p>
 
             <div className="space-y-2 mb-5">
@@ -159,9 +163,7 @@ export default function Configurador() {
                     <p className="text-[.88rem] font-medium">{nombre}</p>
                     <p className="text-[.75rem] text-texto-suave">{ayuda}</p>
                   </div>
-                  <span className="w-9 h-5 rounded-full bg-exito relative shrink-0">
-                    <span className="absolute right-0.5 top-0.5 w-4 h-4 rounded-full bg-white" />
-                  </span>
+                  <Check size={15} weight="bold" className="text-exito shrink-0" />
                 </div>
               ))}
             </div>

@@ -84,10 +84,21 @@ export function ProveedorConfig({ children }: { children: ReactNode }) {
         articulos: c.articulos.map((a) => (a.id === id ? { ...a, ...cambios } : a)),
       })),
     editarTramo: (indice, cambios) =>
-      setConfig((c) => ({
-        ...c,
-        tramos: c.tramos.map((t, i) => (i === indice ? { ...t, ...cambios } : t)),
-      })),
+      setConfig((c) => {
+        const tramos = c.tramos.map((t, i) => (i === indice ? { ...t, ...cambios } : t))
+
+        /*
+         * Cada tramo termina donde empieza el siguiente. Si no se recalcula al
+         * mover un "desde", quedan montos que no caen en ningun tramo y el
+         * descuento se pierde sin que nadie entienda por que.
+         */
+        for (let i = 0; i < tramos.length - 1; i++) {
+          tramos[i] = { ...tramos[i], hasta: Number((tramos[i + 1].desde - 0.01).toFixed(2)) }
+        }
+        tramos[tramos.length - 1] = { ...tramos[tramos.length - 1], hasta: null }
+
+        return { ...c, tramos }
+      }),
     setEnvioGratisDesde: (monto) => setConfig((c) => ({ ...c, envioGratisDesde: monto })),
     restablecer: () => {
       try {

@@ -1,18 +1,27 @@
 import { Link } from 'react-router-dom'
 import { Trash, Minus, Plus, X, Truck } from '@phosphor-icons/react'
 import { useArreglo } from '../estado/ArregloContext'
-import { TRAMOS, FORMATOS, ENVIO_GRATIS_DESDE } from '../datos/catalogo'
+import { FORMATOS } from '../datos/catalogo'
+import { useConfig } from '../estado/ConfigContext'
 import VistaPrevia from './VistaPrevia'
 
 const soles = (n: number) => 'S/ ' + n.toFixed(2)
 
 export default function Panel() {
   const a = useArreglo()
+
+  /*
+   * Los tramos y el monto de envio gratis salen de la configuracion, no del
+   * catalogo del codigo. Si se leyeran del codigo, cambiar un tramo desde el
+   * configurador movería el descuento que se cobra pero no la tabla que ve el
+   * cliente, y la pantalla estaria prometiendo una cosa y cobrando otra.
+   */
+  const { tramos, envioGratisDesde } = useConfig()
   const formato = FORMATOS.find((f) => f.id === a.formatoId) ?? FORMATOS[0]
 
   // La barra mide lo que lleva avanzado dentro del tramo en el que esta, no
   // sobre el total: asi siempre se ve movimiento al agregar algo.
-  const tramoActual = TRAMOS.find((t) => t.porcentaje === a.porcentaje) ?? TRAMOS[0]
+  const tramoActual = tramos.find((t) => t.porcentaje === a.porcentaje) ?? tramos[0]
   const meta = a.faltaParaSiguiente !== null ? a.subtotal + a.faltaParaSiguiente : a.subtotal
   const recorrido = meta - tramoActual.desde
   const avance = recorrido > 0
@@ -114,7 +123,7 @@ export default function Panel() {
 
         <div className="rounded-xl border border-borde overflow-hidden mb-4">
           <p className="px-3.5 py-2 text-[.78rem] font-semibold bg-fondo">Descuentos por monto</p>
-          {TRAMOS.map((t) => {
+          {tramos.map((t) => {
             const activo = t.porcentaje === a.porcentaje
             return (
               <div
@@ -172,7 +181,7 @@ export default function Panel() {
           }
         >
           <Truck size={16} weight="light" />
-          {a.llevaEnvioGratis ? 'Tu envío va gratis' : 'Envío gratis desde S/ ' + ENVIO_GRATIS_DESDE}
+          {a.llevaEnvioGratis ? 'Tu envío va gratis' : 'Envío gratis desde S/ ' + envioGratisDesde}
         </div>
       </div>
 
