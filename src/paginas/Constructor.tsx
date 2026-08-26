@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Minus, Plus, Check, Flower, Confetti, Gift, PenNib, ShieldCheck, Clock } from '@phosphor-icons/react'
 import { useArreglo } from '../estado/ArregloContext'
 import { ARTICULOS, FORMATOS, CINTAS, type Categoria } from '../datos/catalogo'
@@ -109,7 +110,7 @@ export default function Constructor() {
     <div className="min-h-dvh">
       <Encabezado />
 
-      <main className="max-w-[1240px] mx-auto px-4 py-6 lg:py-8">
+      <main className="max-w-[1240px] mx-auto px-4 py-6 lg:py-8 pb-28 lg:pb-8">
         <div className="grid lg:grid-cols-[1fr_380px] gap-6 items-start">
           <div className="min-w-0">
             <div className="mb-6">
@@ -293,6 +294,25 @@ export default function Constructor() {
           </aside>
         </div>
       </main>
+
+      {/* Resumen fijo, solo en movil */}
+      {a.totalPiezas > 0 && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 border-t border-borde bg-white/95 backdrop-blur px-4 py-3 flex items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-[.72rem] text-texto-suave leading-tight">
+              {a.totalPiezas} {a.totalPiezas === 1 ? 'pieza' : 'piezas'}
+              {a.porcentaje > 0 && <span className="text-marca font-semibold"> · −{a.porcentaje}%</span>}
+            </p>
+            <p className="cifra text-[1.15rem] font-bold leading-tight">{soles(a.total)}</p>
+          </div>
+          <Link
+            to="/checkout"
+            className="ml-auto shrink-0 px-6 py-3 rounded-xl bg-marca text-white text-[.92rem] font-semibold active:scale-[.98] transition-transform"
+          >
+            Continuar
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
