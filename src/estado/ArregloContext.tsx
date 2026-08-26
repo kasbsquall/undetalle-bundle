@@ -1,5 +1,8 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { FORMATOS, CINTAS, tramoPara, siguienteTramo, type Articulo } from '../datos/catalogo'
+import {
+  FORMATOS, CINTAS, tramoPara, siguienteTramo,
+  type Articulo, type TramoDescuento,
+} from '../datos/catalogo'
 import { useConfig } from './ConfigContext'
 
 /**
@@ -31,16 +34,30 @@ interface Valor {
   porcentaje: number
   descuento: number
   total: number
-  faltaParaSiguiente: number | null
+  /** Piezas que faltan para el siguiente hito, o null si ya esta en el ultimo. */
+  faltanPiezas: number | null
   porcentajeSiguiente: number | null
+  /** Cuanto lleva recorrido hacia el ultimo hito, de 0 a 100. */
+  avance: number
   llevaEnvioGratis: boolean
-  faltaParaEnvioGratis: number
+  /** Piezas del hito alcanzado, para poder nombrarlo en pantalla. */
+  piezasDelHito: number | null
+  /** Si el siguiente hito trae el envio, para no prometerlo de mas. */
+  siguienteTraeEnvio: boolean
+  tramos: TramoDescuento[]
 }
 
 const Contexto = createContext<Valor | null>(null)
 
 export function ProveedorArreglo({ children }: { children: ReactNode }) {
-  const { articulos, tramos, envioGratisDesde } = useConfig()
+  const { articulos, tramos: tramosSinOrden } = useConfig()
+
+  // Ordenados por cantidad: tramoPara y siguienteTramo cuentan con eso, y en el
+  // configurador los hitos se pueden teclear en cualquier orden.
+  const tramos = useMemo(
+    () => [...tramosSinOrden].sort((x, y) => x.piezas - y.piezas),
+    [tramosSinOrden],
+  )
   const [formatoId, setFormatoId] = useState(FORMATOS[0].id)
   const [cintaId, setCintaId] = useState(CINTAS[0].id)
   const [cantidades, setCantidades] = useState<Record<string, number>>({})
@@ -60,7 +77,13 @@ export function ProveedorArreglo({ children }: { children: ReactNode }) {
     const lineas: Linea[] = Object.entries(cantidades)
       .map(([id, cantidad]) => {
         const articulo = articulos.find((a) => a.id === id)
-        return articulo ? { articulo, cantidad } : null
+        if (!articulo) return null
+
+        // Si desde el configurador se baja el stock por debajo de lo que ya
+        // estaba elegido, el carrito no puede seguir mostrando mas unidades de
+        // las que hay.
+        const cabe = Math.min(cantidad, articulo.stock)
+        return cabe > 0 ? { articulo, cantidad: cabe } : null
       })
       .filter((l): l is Linea => l !== null)
 
@@ -69,14 +92,29 @@ export function ProveedorArreglo({ children }: { children: ReactNode }) {
       formato.precio +
       lineas.reduce((suma, l) => suma + l.articulo.precio * l.cantidad, 0)
 
-    const tramo = tramoPara(subtotal, tramos)
-    const siguiente = siguienteTramo(subtotal, tramos)
-    const descuento = +(subtotal * (tramo.porcentaje / 100)).toFixed(2)
+    const totalPiezas = lineas.reduce((s, l) => s + l.cantidad, 0)
+    const tramo = tramoPara(totalPiezas, tramos)
+    const siguiente = siguienteTramo(totalPiezas, tramos)
+    const porcentaje = tramo?.porcentaje ?? 0
+    const descuento = +(subtotal * (porcentaje / 100)).toFixed(2)
+
+    /*
+     * La barra mide el camino completo hasta el ultimo hito.
+     *
+     * Antes medía el trecho entre el hito alcanzado y el siguiente, y eso hacía
+     * que al llegar a 3, 5 u 8 piezas la barra se vaciara y marcara 0% justo en
+     * el momento en que el cliente acababa de ganar el descuento.
+     */
+    const meta = tramos.length ? tramos[tramos.length - 1].piezas : 0
+    const avance = meta > 0 ? Math.min(100, Math.round((totalPiezas / meta) * 100)) : 0
 
     return {
       formatoId,
       cintaId,
-      cantidades,
+      // Las cantidades salen de las lineas, ya recortadas al stock. Leyendo el
+      // estado en bruto, la tarjeta seguia mostrando diez unidades elegidas
+      // despues de que el stock bajara a dos.
+      cantidades: Object.fromEntries(lineas.map((l) => [l.articulo.id, l.cantidad])),
       mensaje,
       elegirFormato: setFormatoId,
       elegirCinta: setCintaId,
@@ -86,17 +124,20 @@ export function ProveedorArreglo({ children }: { children: ReactNode }) {
       limpiar: () => { setCantidades({}); setMensaje('') },
       escribirMensaje: setMensaje,
       lineas,
-      totalPiezas: lineas.reduce((s, l) => s + l.cantidad, 0),
+      totalPiezas,
       subtotal,
-      porcentaje: tramo.porcentaje,
+      porcentaje,
       descuento,
       total: +(subtotal - descuento).toFixed(2),
-      faltaParaSiguiente: siguiente ? +(siguiente.desde - subtotal).toFixed(2) : null,
+      faltanPiezas: siguiente ? siguiente.piezas - totalPiezas : null,
       porcentajeSiguiente: siguiente ? siguiente.porcentaje : null,
-      llevaEnvioGratis: subtotal >= envioGratisDesde,
-      faltaParaEnvioGratis: +Math.max(0, envioGratisDesde - subtotal).toFixed(2),
+      avance,
+      llevaEnvioGratis: tramo?.envioGratis ?? false,
+      piezasDelHito: tramo?.piezas ?? null,
+      siguienteTraeEnvio: siguiente?.envioGratis ?? false,
+      tramos,
     }
-  }, [formatoId, cintaId, cantidades, mensaje, articulos, tramos, envioGratisDesde])
+  }, [formatoId, cintaId, cantidades, mensaje, articulos, tramos])
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>
 }

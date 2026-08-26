@@ -1,14 +1,14 @@
 import { FORMATOS, CINTAS } from '../datos/catalogo'
 
 /**
- * El recipiente donde se acomoda el arreglo.
+ * El recipiente del arreglo.
  *
- * Va en vectores y no en foto porque el color de la cinta lo elige el cliente:
- * con fotos haria falta una imagen por cada combinacion de formato y color.
+ * Va en vectores porque el color de la cinta lo elige el cliente: con fotos
+ * haria falta una imagen por cada combinacion de formato y color.
  *
- * El ramo esta dibujado siguiendo un ramo real, no de memoria: papel en cono
- * suave que se abre arriba, ceñido a media altura con el lazo, y por debajo el
- * cilindro de papel que envuelve los tallos y le permite quedar de pie.
+ * El ramo sigue la forma de uno real: papel en cono suave que se abre arriba,
+ * ceñido a media altura con el lazo, y por debajo el cilindro de papel que
+ * envuelve los tallos y le permite quedar de pie.
  */
 
 interface Props {
@@ -16,23 +16,6 @@ interface Props {
   cintaId: string
 }
 
-/**
- * Donde queda la boca de cada recipiente, en porcentaje del alto de la vista
- * previa, contando desde abajo.
- *
- * Estos numeros no son a ojo: el recipiente ocupa el 58% inferior de la vista y
- * dentro de su viewBox de 170 la boca esta a una altura conocida, asi que salen
- * de (170 - alturaDeLaBoca) / 170 * 58. Se les resta un poco para que la primera
- * fila de piezas quede metida dentro y no flotando encima.
- *
- * Cuando estaban mal puestos, las flores aparecian al costado del recipiente en
- * lugar de saliendo de el.
- */
-export const BOCA: Record<string, { y: number; ancho: number }> = {
-  ramo: { y: 39, ancho: 80 },
-  caja: { y: 41, ancho: 70 },
-  florero: { y: 50, ancho: 42 },
-}
 
 export default function Recipiente({ formatoId, cintaId }: Props) {
   const formato = FORMATOS.find((f) => f.id === formatoId) ?? FORMATOS[0]

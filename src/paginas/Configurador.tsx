@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Info, ArrowCounterClockwise, Check } from '@phosphor-icons/react'
 import { FORMATOS } from '../datos/catalogo'
@@ -8,11 +9,12 @@ import Pieza from '../componentes/Pieza'
 const soles = (n: number) => 'S/ ' + n.toFixed(2)
 
 /**
- * La pantalla que responde la pregunta de Wilson: esto lo cargo yo.
+ * La pantalla que responde la pregunta de quien administra la tienda: esto lo
+ * cargo yo.
  *
- * Es editable de verdad, no una maqueta: lo que se cambia aqui se ve en la
- * tienda al instante. En el prototipo se guarda en el navegador; en el producto
- * real vive en la base de datos y esta pantalla es la del panel de WordPress.
+ * Lo que se cambia aqui se ve en la tienda al instante. En el prototipo se
+ * guarda en el navegador; en el producto real vive en la base de datos y esta
+ * pantalla es la del panel de WordPress.
  */
 
 function Numero({
@@ -28,6 +30,13 @@ function Numero({
   prefijo?: string
   ancho?: string
 }) {
+  /*
+   * El texto se guarda tal cual mientras se escribe y solo se propaga el numero
+   * al salir del campo. Validando en cada tecla, borrar el contenido para
+   * reemplazarlo hacia que el campo saltara solo al minimo.
+   */
+  const [texto, setTexto] = useState<string | null>(null)
+
   return (
     <div className={'relative ' + ancho}>
       {prefijo && (
@@ -38,8 +47,15 @@ function Numero({
       <input
         type="number"
         min={0}
-        value={valor}
-        onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+        value={texto ?? valor}
+        onBlur={() => {
+          if (texto !== null) onChange(Math.max(0, Number(texto) || 0))
+          setTexto(null)
+        }}
+        onChange={(e) => {
+          setTexto(e.target.value)
+          if (e.target.value.trim() !== '') onChange(Math.max(0, Number(e.target.value) || 0))
+        }}
         className={
           'cifra w-full rounded-lg border border-borde py-1.5 text-[.86rem] text-right ' +
           'focus:outline-none focus:border-marca focus:ring-[3px] focus:ring-marca/12 ' +
@@ -77,7 +93,7 @@ export default function Configurador() {
               Configurador del bundle
             </h1>
             <p className="text-texto-suave text-[.92rem] mt-1">
-              Cambia precios, stock y descuentos. La tienda lo toma al instante.
+              Cambia precios, stock e hitos de descuento. La tienda lo toma al instante.
             </p>
           </div>
           {c.hayCambios && (
@@ -101,42 +117,46 @@ export default function Configurador() {
 
         <div className="grid lg:grid-cols-2 gap-4 mb-4 items-start">
           <section className="bg-white rounded-2xl border border-borde p-5">
-            <h2 className="font-semibold text-[1.02rem] mb-1">Descuentos por monto</h2>
+            <h2 className="font-semibold text-[1.02rem] mb-1">Descuentos por cantidad</h2>
             <p className="text-[.8rem] text-texto-suave mb-4">
-              Desde qué monto aplica cada tramo y cuánto descuenta. Debajo del primer tramo no
-              hay descuento.
+              Desde cuántas piezas aplica cada hito y cuánto descuenta. Por debajo del primer
+              hito no hay descuento.
             </p>
 
             <div className="space-y-2">
-              {c.tramos.map((t, i) =>
-                // El primer tramo es el suelo: empieza en cero y no descuenta.
-                // Ponerlo como campo editable solo invita a romper la escalera.
-                i === 0 ? null : (
-                  <div key={i} className="flex items-center gap-2.5">
-                    <span className="text-[.84rem] text-texto-suave shrink-0">Desde</span>
-                    <Numero
-                      valor={t.desde}
-                      prefijo="S/"
-                      onChange={(n) => c.editarTramo(i, { desde: n })}
+              {c.tramos.map((t, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <span className="text-[.84rem] text-texto-suave shrink-0 w-10">Desde</span>
+                  <Numero
+                    valor={t.piezas}
+                    sufijo="pz"
+                    ancho="w-[86px]"
+                    onChange={(n) => c.editarTramo(i, { piezas: Math.max(1, n) })}
+                  />
+                  <span className="text-[.84rem] text-texto-suave shrink-0">descuenta</span>
+                  <Numero
+                    valor={t.porcentaje}
+                    sufijo="%"
+                    ancho="w-[80px]"
+                    onChange={(n) => c.editarTramo(i, { porcentaje: Math.min(100, n) })}
+                  />
+                  <label className="flex items-center gap-1.5 text-[.78rem] text-texto-suave cursor-pointer ml-auto shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={t.envioGratis}
+                      onChange={(e) => c.editarTramo(i, { envioGratis: e.target.checked })}
+                      className="accent-[#EC5070] w-3.5 h-3.5"
                     />
-                    <span className="cifra text-[.78rem] text-texto-suave shrink-0">
-                      {t.hasta === null ? 'a más' : 'a ' + soles(t.hasta)}
-                    </span>
-                    <Numero
-                      valor={t.porcentaje}
-                      sufijo="%"
-                      ancho="w-[86px]"
-                      onChange={(n) => c.editarTramo(i, { porcentaje: Math.min(100, n) })}
-                    />
-                  </div>
-                ),
-              )}
+                    Envío
+                  </label>
+                </div>
+              ))}
             </div>
 
-            <div className="flex items-center gap-2.5 mt-5 pt-4 border-t border-borde">
-              <span className="text-[.84rem] flex-1">Envío gratis desde</span>
-              <Numero valor={c.envioGratisDesde} prefijo="S/" onChange={c.setEnvioGratisDesde} />
-            </div>
+            <p className="text-[.76rem] text-texto-suave mt-4 pt-3.5 border-t border-borde">
+              El envío gratis va atado al hito que tenga la casilla marcada. El cliente ve los{' '}
+              {c.tramos.length} hitos desde que entra, con el que ya ganó resaltado.
+            </p>
           </section>
 
           <section className="bg-white rounded-2xl border border-borde p-5">

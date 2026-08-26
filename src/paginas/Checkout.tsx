@@ -3,16 +3,16 @@ import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, ShieldCheck, Truck, CheckCircle } from '@phosphor-icons/react'
 import { useArreglo } from '../estado/ArregloContext'
 import { FORMATOS, CINTAS } from '../datos/catalogo'
-import { useConfig } from '../estado/ConfigContext'
 import Encabezado from '../componentes/Encabezado'
-import VistaPrevia from '../componentes/VistaPrevia'
+import Pieza from '../componentes/Pieza'
+import Recipiente from '../componentes/Recipiente'
 
 const soles = (n: number) => 'S/ ' + n.toFixed(2)
 
 /*
  * Las mismas pasarelas que tiene el checkout real de Undetalle, en el mismo
  * orden. Aqui son solo visuales: el prototipo no cobra nada y siempre termina
- * bien. Es para que Wilson vea el recorrido completo, no para procesar pagos.
+ * bien. Existe para enseñar el recorrido completo; el cobro es simulado.
  */
 const PASARELAS = [
   { id: 'mercadopago', nombre: 'Mercado Pago', sello: 'Más rápido' },
@@ -35,7 +35,6 @@ const DISTRITOS = [
 
 export default function Checkout() {
   const a = useArreglo()
-  const { envioGratisDesde } = useConfig()
   const navegar = useNavigate()
   const [distrito, setDistrito] = useState(DISTRITOS[0].nombre)
   const [pasarela, setPasarela] = useState(PASARELAS[0].id)
@@ -95,9 +94,13 @@ export default function Checkout() {
           <ArrowLeft size={16} weight="light" /> Seguir editando mi arreglo
         </Link>
 
-        <h1 className="text-[1.6rem] lg:text-[2rem] font-bold tracking-[-.02em] mb-6">
+        <h1 className="text-[1.6rem] lg:text-[2rem] font-bold tracking-[-.02em] mb-2">
           Finalizar compra
         </h1>
+        <p className="text-[.86rem] text-texto-suave mb-6">
+          Este es el checkout que ya tiene la tienda, con sus distritos y sus formas de pago.
+          El pack entra como un producto más.
+        </p>
 
         <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
           <div className="space-y-4">
@@ -118,7 +121,8 @@ export default function Checkout() {
                   >
                     {DISTRITOS.map((d) => (
                       <option key={d.nombre} value={d.nombre}>
-                        {d.nombre} · envío {soles(d.envio)}
+                        {d.nombre}
+                        {a.llevaEnvioGratis ? ' · envío gratis' : ' · envío ' + soles(d.envio)}
                       </option>
                     ))}
                   </select>
@@ -136,8 +140,8 @@ export default function Checkout() {
               >
                 <Truck size={18} weight="light" className="shrink-0" />
                 {a.llevaEnvioGratis
-                  ? 'Tu compra supera S/ ' + envioGratisDesde + ', el envío va gratis'
-                  : 'Envío a ' + zona.nombre + ': ' + soles(zona.envio) + '. Gratis desde S/ ' + envioGratisDesde}
+                  ? 'Llegaste a ' + a.piezasDelHito + ' piezas, el envío va gratis'
+                  : 'Envío a ' + zona.nombre + ': ' + soles(zona.envio)}
               </div>
             </section>
 
@@ -181,18 +185,24 @@ export default function Checkout() {
             <div className="bg-white rounded-2xl border border-borde p-5">
               <h2 className="font-semibold text-[1.02rem] mb-3.5">Tu pedido</h2>
 
-              <div className="mb-4">
-                <VistaPrevia />
-              </div>
-
-              <div className="space-y-1.5 text-[.86rem] mb-3">
-                <div className="flex justify-between">
-                  <span className="text-texto-suave">{formato.nombre}, cinta {cinta.nombre.toLowerCase()}</span>
-                  <span className="cifra">{formato.precio === 0 ? '—' : soles(formato.precio)}</span>
+              <div className="space-y-2.5 text-[.86rem] mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-fondo p-1 shrink-0">
+                    <Recipiente formatoId={a.formatoId} cintaId={a.cintaId} />
+                  </div>
+                  <span className="flex-1 min-w-0 text-texto-suave">
+                    {formato.nombre}, cinta {cinta.nombre.toLowerCase()}
+                  </span>
+                  <span className="cifra">
+                    {formato.precio === 0 ? 'Incluido' : soles(formato.precio)}
+                  </span>
                 </div>
                 {a.lineas.map(({ articulo, cantidad }) => (
-                  <div key={articulo.id} className="flex justify-between">
-                    <span className="text-texto-suave">
+                  <div key={articulo.id} className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg bg-fondo p-1 shrink-0">
+                      <Pieza id={articulo.id} nombre={articulo.nombre} />
+                    </div>
+                    <span className="flex-1 min-w-0 text-texto-suave truncate">
                       {articulo.nombre} <span className="cifra">×{cantidad}</span>
                     </span>
                     <span className="cifra">{soles(articulo.precio * cantidad)}</span>
@@ -212,7 +222,7 @@ export default function Checkout() {
                   <span className="cifra">{soles(a.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-texto-suave">Descuento ({a.porcentaje}%)</span>
+                  <span className="text-texto-suave">Descuento{a.porcentaje > 0 ? ' (' + a.porcentaje + '% OFF)' : ''}</span>
                   <span className="cifra text-marca">− {soles(a.descuento)}</span>
                 </div>
                 <div className="flex justify-between">

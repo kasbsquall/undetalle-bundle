@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
-  ARTICULOS, TRAMOS, ENVIO_GRATIS_DESDE,
+  ARTICULOS, TRAMOS,
   type Articulo, type TramoDescuento,
 } from '../datos/catalogo'
 
 /**
  * La configuracion del bundle: que material hay, a que precio, cuanto stock, y
- * que descuento se da en cada tramo.
+ * que descuento se da al llegar a cada cantidad de piezas.
  *
  * En el producto real esto vive en la base de datos y se administra desde el
  * panel de WordPress. Aqui se guarda en el navegador para que el prototipo
@@ -14,18 +14,19 @@ import {
  * cambios se ven en la tienda al instante, que es lo que hay que enseñar.
  */
 
-const LLAVE = 'undetalle-bundle-config'
+// La v2 es porque los tramos pasaron de monto a cantidad de piezas. Sin
+// cambiar la llave, una configuracion vieja guardada en el navegador se
+// mezclaria con la nueva forma y los descuentos saldrian en blanco.
+const LLAVE = 'undetalle-bundle-config-v2'
 
 interface Config {
   articulos: Articulo[]
   tramos: TramoDescuento[]
-  envioGratisDesde: number
 }
 
 interface Valor extends Config {
   editarArticulo: (id: string, cambios: Partial<Articulo>) => void
   editarTramo: (indice: number, cambios: Partial<TramoDescuento>) => void
-  setEnvioGratisDesde: (monto: number) => void
   restablecer: () => void
   hayCambios: boolean
 }
@@ -33,7 +34,6 @@ interface Valor extends Config {
 const PorDefecto: Config = {
   articulos: ARTICULOS,
   tramos: TRAMOS,
-  envioGratisDesde: ENVIO_GRATIS_DESDE,
 }
 
 const Contexto = createContext<Valor | null>(null)
@@ -54,11 +54,12 @@ function leerGuardado(): Config {
       return g ? { ...base, precio: g.precio, stock: g.stock } : base
     })
 
-    return {
-      articulos,
-      tramos: guardado.tramos?.length === TRAMOS.length ? guardado.tramos : TRAMOS,
-      envioGratisDesde: guardado.envioGratisDesde ?? ENVIO_GRATIS_DESDE,
-    }
+    const tramos =
+      guardado.tramos?.length === TRAMOS.length && guardado.tramos.every((t) => typeof t.piezas === 'number')
+        ? guardado.tramos
+        : TRAMOS
+
+    return { articulos, tramos }
   } catch {
     return PorDefecto
   }
@@ -84,22 +85,10 @@ export function ProveedorConfig({ children }: { children: ReactNode }) {
         articulos: c.articulos.map((a) => (a.id === id ? { ...a, ...cambios } : a)),
       })),
     editarTramo: (indice, cambios) =>
-      setConfig((c) => {
-        const tramos = c.tramos.map((t, i) => (i === indice ? { ...t, ...cambios } : t))
-
-        /*
-         * Cada tramo termina donde empieza el siguiente. Si no se recalcula al
-         * mover un "desde", quedan montos que no caen en ningun tramo y el
-         * descuento se pierde sin que nadie entienda por que.
-         */
-        for (let i = 0; i < tramos.length - 1; i++) {
-          tramos[i] = { ...tramos[i], hasta: Number((tramos[i + 1].desde - 0.01).toFixed(2)) }
-        }
-        tramos[tramos.length - 1] = { ...tramos[tramos.length - 1], hasta: null }
-
-        return { ...c, tramos }
-      }),
-    setEnvioGratisDesde: (monto) => setConfig((c) => ({ ...c, envioGratisDesde: monto })),
+      setConfig((c) => ({
+        ...c,
+        tramos: c.tramos.map((t, i) => (i === indice ? { ...t, ...cambios } : t)),
+      })),
     restablecer: () => {
       try {
         localStorage.removeItem(LLAVE)

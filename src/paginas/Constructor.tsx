@@ -11,11 +11,10 @@ import Encabezado from '../componentes/Encabezado'
 const soles = (n: number) => 'S/ ' + n.toFixed(2)
 
 /*
- * Cuatro pasos, no los cinco del boceto. Follajes y flores se juntaron porque
- * las dos cosas van dentro del arreglo y el follaje son tres opciones: un paso
- * entero para tres tarjetas se siente vacio. Y se agrego el paso de
- * presentacion, que el boceto no tenia, porque la vista previa necesita saber
- * en que va el arreglo antes de empezar a llenarlo.
+ * Cuatro pasos. Flores y follaje comparten paso porque las dos cosas van dentro
+ * del arreglo y el follaje son tres opciones: un paso entero para tres tarjetas
+ * se siente vacio. La presentacion abre el recorrido porque el envoltorio marca
+ * el precio de partida y conviene fijarlo antes de sumar material.
  */
 const PASOS = [
   { id: 1, nombre: 'Presentación', ayuda: 'Elige cómo va tu arreglo', icono: Gift },
@@ -30,7 +29,7 @@ const BENEFICIOS: Array<[typeof ShieldCheck, string]> = [
   [Clock, 'Entrega el mismo día'],
 ]
 
-function Contador({ id, stock }: { id: string; stock: number }) {
+function Contador({ id, nombre, stock }: { id: string; nombre: string; stock: number }) {
   const { cantidades, sumar, restar } = useArreglo()
   const cantidad = cantidades[id] ?? 0
   const tope = cantidad >= stock
@@ -40,7 +39,7 @@ function Contador({ id, stock }: { id: string; stock: number }) {
       <button
         onClick={() => restar(id)}
         disabled={cantidad === 0}
-        aria-label="Quitar uno"
+        aria-label={'Quitar una unidad de ' + nombre}
         className="px-3 py-2 text-texto-suave hover:text-marca disabled:opacity-35 disabled:hover:text-texto-suave transition-colors"
       >
         <Minus size={14} weight="bold" />
@@ -49,7 +48,9 @@ function Contador({ id, stock }: { id: string; stock: number }) {
       <button
         onClick={() => sumar(id)}
         disabled={tope}
-        aria-label={tope ? 'Sin más unidades disponibles' : 'Agregar uno'}
+        aria-label={
+          tope ? 'Sin más unidades de ' + nombre : 'Agregar una unidad de ' + nombre
+        }
         className={
           'px-3 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ' +
           (cantidad > 0
@@ -60,6 +61,27 @@ function Contador({ id, stock }: { id: string; stock: number }) {
         <Plus size={14} weight="bold" />
       </button>
     </div>
+  )
+}
+
+/**
+ * Lo que queda de un material.
+ *
+ * Se calcula descontando lo que el cliente ya lleva en el carrito. Con el stock
+ * a secas, un material con tres unidades y tres en el carrito mostraba
+ * "quedan 0" mientras otro con stock cero mostraba "Agotado", dos textos para
+ * el mismo hecho. Y bajar el stock desde el configurador por debajo de lo ya
+ * elegido llegaba a pintar cantidades negativas.
+ */
+function Disponibles({ libres }: { libres: number }) {
+  if (libres === 0) {
+    return <span className="text-[.72rem] font-medium text-texto-suave">Agotado</span>
+  }
+  if (libres > 5) return null
+  return (
+    <span className="cifra text-[.72rem] font-medium text-marca">
+      {libres === 1 ? 'queda 1 unidad' : 'quedan ' + libres + ' unidades'}
+    </span>
   )
 }
 
@@ -88,15 +110,9 @@ function Tarjetas({ categoria }: { categoria: Categoria }) {
               <p className="text-[.74rem] text-texto-suave mt-0.5 mb-1.5">{art.descripcion}</p>
               <div className="flex items-baseline gap-2 mb-2.5">
                 <p className="cifra text-[.86rem] font-semibold text-marca">{soles(art.precio)} c/u</p>
-                {art.stock === 0 ? (
-                  <span className="text-[.72rem] font-medium text-texto-suave">Agotado</span>
-                ) : art.stock - (cantidades[art.id] ?? 0) <= 5 ? (
-                  <span className="cifra text-[.72rem] font-medium text-marca">
-                    quedan {art.stock - (cantidades[art.id] ?? 0)}
-                  </span>
-                ) : null}
+                <Disponibles libres={Math.max(0, art.stock - (cantidades[art.id] ?? 0))} />
               </div>
-              <Contador id={art.id} stock={art.stock} />
+              <Contador id={art.id} nombre={art.nombre} stock={art.stock} />
             </div>
           </div>
         )
@@ -118,6 +134,7 @@ function FotoArticulo({ id, nombre }: { id: string; nombre: string }) {
 export default function Constructor() {
   const [paso, setPaso] = useState(1)
   const a = useArreglo()
+  const conEnvio = a.tramos.find((t) => t.envioGratis)
 
   return (
     <div className="min-h-dvh">
@@ -131,7 +148,16 @@ export default function Constructor() {
                 Personaliza tu <span className="text-marca">arreglo floral</span>
               </h1>
               <p className="text-texto-suave text-[.92rem] mt-1">
-                Elige tus flores y complementos favoritos. Mientras más agregas, mayor descuento obtienes.
+                Elige tus flores y complementos favoritos. Desde{' '}
+                <span className="cifra font-medium text-texto">{a.tramos[0]?.piezas}</span> piezas
+                empiezas a ganar descuento
+                {conEnvio && (
+                  <>
+                    , y desde <span className="cifra font-medium text-texto">{conEnvio.piezas}</span>{' '}
+                    el envío va gratis
+                  </>
+                )}
+                .
               </p>
             </div>
 
@@ -314,15 +340,20 @@ export default function Constructor() {
           <div className="min-w-0">
             <p className="text-[.72rem] text-texto-suave leading-tight">
               {a.totalPiezas} {a.totalPiezas === 1 ? 'pieza' : 'piezas'}
-              {a.porcentaje > 0 && <span className="text-marca font-semibold"> · −{a.porcentaje}%</span>}
+              {a.porcentaje > 0 && (
+                <span className="cifra text-marca font-semibold"> · {a.porcentaje}% OFF</span>
+              )}
             </p>
-            <p className="cifra text-[1.15rem] font-bold leading-tight">{soles(a.total)}</p>
+            <p className="cifra text-[1.15rem] font-bold leading-tight">
+              <span className="text-[.72rem] font-normal text-texto-suave">Pack </span>
+              {soles(a.total)}
+            </p>
           </div>
           <Link
             to="/checkout"
-            className="ml-auto shrink-0 px-6 py-3 rounded-xl bg-marca text-white text-[.92rem] font-semibold active:scale-[.98] transition-transform"
+            className="ml-auto shrink-0 px-5 py-3 rounded-xl bg-marca text-white text-[.92rem] font-semibold active:scale-[.98] transition-transform"
           >
-            Continuar
+            Agregar pack al carrito
           </Link>
         </div>
       )}
