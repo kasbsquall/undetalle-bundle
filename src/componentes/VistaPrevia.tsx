@@ -24,6 +24,8 @@ interface Colocada {
   giro: number
   tamano: number
   orden: number
+  /** 0 el follaje al fondo, 1 las flores, 2 los extras delante. */
+  capa: number
 }
 
 const ANGULO_DORADO = 137.508 * (Math.PI / 180)
@@ -38,9 +40,14 @@ function variacion(semilla: string): number {
 export default function VistaPrevia() {
   const { lineas, formatoId, cintaId, totalPiezas } = useArreglo()
 
-  // El follaje va primero para que quede detras, y mas abierto que las flores.
+  /*
+   * Las flores van primero en la espiral, asi ocupan el centro del ramo. El
+   * follaje va al final, que es donde la espiral ya se abrio, y por eso queda
+   * asomando por los bordes. La profundidad no la da este orden sino el
+   * z-index, que se calcula aparte: el verde siempre por detras.
+   */
   const ordenadas = [...lineas].sort((a, b) => {
-    const peso = (c: string) => (c === 'follaje' ? 0 : c === 'flor' ? 1 : 2)
+    const peso = (c: string) => (c === 'flor' ? 0 : c === 'extra' ? 1 : 2)
     return peso(a.articulo.categoria) - peso(b.articulo.categoria)
   })
 
@@ -72,7 +79,7 @@ export default function VistaPrevia() {
     const y = 52 + Math.sin(angulo) * distancia * 0.86
 
     // El follaje se sale un poco mas, que es lo que hace de fondo verde.
-    const empuje = u.categoria === 'follaje' ? 1.22 : 1
+    const empuje = u.categoria === 'follaje' ? 1.18 : 1
 
     return {
       clave: u.clave,
@@ -84,6 +91,7 @@ export default function VistaPrevia() {
       // Las de afuera un poco mas chicas: da sensacion de profundidad.
       tamano: (25 - Math.min(7, distancia * 0.32)) * u.escala,
       orden: i,
+      capa: u.categoria === 'follaje' ? 0 : u.categoria === 'flor' ? 1 : 2,
     }
   })
 
@@ -111,7 +119,7 @@ export default function VistaPrevia() {
               width: p.tamano + '%',
               height: p.tamano * 1.2 + '%',
               marginLeft: -p.tamano / 2 + '%',
-              zIndex: 10 + p.orden,
+              zIndex: p.capa * 100 + p.orden,
               ['--giro' as string]: p.giro + 'deg',
               animationDelay: Math.min(p.orden, 12) * 26 + 'ms',
             }}
